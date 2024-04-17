@@ -1,16 +1,3 @@
-﻿.header {
-    display: flex;
-    align-items: center;
-    flex-flow: column;
-    margin-bottom: 2rem;
-    margin-top: 2rem;
-}
-
-    .header h1 {
-        color: var(--header-color);
-        font-size: 2rem;
-    }
-
-.covers {
+﻿.covers {
     display: grid;
 }
