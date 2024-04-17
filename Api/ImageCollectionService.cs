@@ -140,18 +140,6 @@ internal class ImageCollectionService
 
     private static string GetBlobUri(BlobContainerClient containerClient, BlobItem blobItem)
     {
-        return new Uri(containerClient.Uri, blobItem.Name).ToString();
-    }
-
-    private static BlobItem GetDescriptionBlob(IEnumerable<BlobItem> grossItems)
-    {
-        return grossItems.Where(b => b.Name.StartsWith("description.txt", StringComparison.OrdinalIgnoreCase))
-            .FirstOrDefault();
-    }
-
-    private BlobItem GetCoverImageBlob(IEnumerable<BlobItem> grossItems)
-    {
-        return grossItems.Where(b => b.Name.StartsWith("cover.", StringComparison.OrdinalIgnoreCase))
-            .FirstOrDefault();
+        return $"{containerClient.Uri}/{blobItem.Name}";
     }
 }
