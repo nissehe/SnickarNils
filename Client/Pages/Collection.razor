@@ -1,0 +1,22 @@
+﻿@page "/collection/{containerName}"
+@inject HttpClient http
+@inject NavigationManager navigation
+
+<h3>ImageCollection</h3>
+
+@if (imageCollection != null)
+{
+    @imageCollection.Description
+}
+
+@code {
+    [Parameter] 
+    public string ContainerName { get; set; }
+
+    private ImageCollection imageCollection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        imageCollection = await http.GetFromJsonAsync<ImageCollection>($"api/ImageCollection/{ContainerName}");
+    }
+}

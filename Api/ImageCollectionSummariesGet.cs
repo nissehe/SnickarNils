@@ -15,13 +15,13 @@ namespace Api
             _imageCollectionService = imageCollectionService;
         }
 
-        [FunctionName("ImageSetSummaryGet")]
+        [FunctionName("ImageCollectionSummariesGet")]
         public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ImageCollectionSummaries")] HttpRequest req,
             ILogger log)
         {
 
-            var summaries = _imageCollectionService.GetSummaries();
+            var summaries = await _imageCollectionService.GetSummaries();
 
             return new OkObjectResult(summaries);
         }

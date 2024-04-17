@@ -17,10 +17,10 @@ namespace Api
 
         [FunctionName("ImageSetGet")]
         public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ImageSet/{containerName}")] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ImageCollection/{containerName}")] HttpRequest req,
             ILogger log, string containerName)
         {
-            var imageCollections = _imageCollectionService.GetCollection(containerName);
+            var imageCollections = await _imageCollectionService.GetCollection(containerName);
 
             return new OkObjectResult(imageCollections);
         }

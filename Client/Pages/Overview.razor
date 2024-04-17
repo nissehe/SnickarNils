@@ -1,0 +1,27 @@
+﻿@page "/overview"
+@inject HttpClient http
+@inject NavigationManager navigation
+
+<h1>SnickarNils!</h1>
+
+@if (imageCollectionSummaries != null)
+{
+    foreach (ImageCollectionSummary imageCollectionSummary in imageCollectionSummaries)
+    {
+        <div @onclick="() => ViewCollection(imageCollectionSummary.ContainerName)">@imageCollectionSummary.Description</div>
+    }
+}
+
+@code {
+    private List<ImageCollectionSummary> imageCollectionSummaries;
+
+    protected override async Task OnInitializedAsync()
+    {
+        imageCollectionSummaries = await http.GetFromJsonAsync<List<ImageCollectionSummary>>("api/ImageCollectionSummaries");
+    }
+
+    private void ViewCollection(string containerName)
+    {
+        navigation.NavigateTo($"/collection/{containerName}");
+    }
+}
