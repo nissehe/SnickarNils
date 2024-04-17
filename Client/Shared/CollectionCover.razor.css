@@ -1,15 +1,22 @@
-﻿.tile{
-    border-radius: 5px;
-    border-block-color: darkslategray;
-    border-width: 2px;
+﻿.tile {
     display: flex;
     flex-direction: column;
+    border: solid;
+    border-width: 1px;
+    border-radius: 4px;
+    border-color: var(--accent-color);
+    cursor: pointer;
+    box-shadow: 3px 3px 7px -1px rgba(0,0,0,0.75);
+    max-width: 30%;
+    overflow: hidden;
 }
 
 .image{
 
 }
 
-.description{
-    background-color: antiquewhite;
+.description {
+    color: var(--text-color);
+    background-color: var(--background-color);
+    padding: 1rem;
 }
