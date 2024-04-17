@@ -1,0 +1,25 @@
+﻿@inject NavigationManager navigation
+
+@if (ImageCollectionSummary != null)
+{
+    <div class="tile" @onclick="() => ViewCollection()">
+        <div class="image">
+            <img src="@ImageCollectionSummary.CoverImageUri" />
+        </div>
+
+        <div class="description">
+            @ImageCollectionSummary.Description
+        </div>
+    </div>
+}
+
+@code {
+
+    [Parameter]
+    public ImageCollectionSummary ImageCollectionSummary { get; set; }
+
+    private void ViewCollection()
+    {
+        navigation.NavigateTo($"/collection/{ImageCollectionSummary.ContainerName}");
+    }
+}

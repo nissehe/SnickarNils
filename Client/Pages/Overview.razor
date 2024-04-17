@@ -8,7 +8,7 @@
 {
     foreach (ImageCollectionSummary imageCollectionSummary in imageCollectionSummaries)
     {
-        <div @onclick="() => ViewCollection(imageCollectionSummary.ContainerName)">@imageCollectionSummary.Description</div>
+        <CollectionCover ImageCollectionSummary="imageCollectionSummary"></CollectionCover>
     }
 }
 
@@ -18,10 +18,5 @@
     protected override async Task OnInitializedAsync()
     {
         imageCollectionSummaries = await http.GetFromJsonAsync<List<ImageCollectionSummary>>("api/ImageCollectionSummaries");
-    }
-
-    private void ViewCollection(string containerName)
-    {
-        navigation.NavigateTo($"/collection/{containerName}");
     }
 }

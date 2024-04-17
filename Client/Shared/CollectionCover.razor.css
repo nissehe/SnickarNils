@@ -1,0 +1,15 @@
+﻿.tile{
+    border-radius: 5px;
+    border-block-color: darkslategray;
+    border-width: 2px;
+    display: flex;
+    flex-direction: column;
+}
+
+.image{
+
+}
+
+.description{
+    background-color: antiquewhite;
+}
