@@ -1,6 +1,6 @@
 ﻿namespace Data
 {
-    public class ImageColectionSummary
+    public class ImageCollectionSummary
     {
         public string Description { get; set; } 
         public string CoverImageUri { get; set; }
