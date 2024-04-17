@@ -7,7 +7,7 @@
     border-color: var(--accent-color);
     cursor: pointer;
     box-shadow: 3px 3px 7px -1px rgba(0,0,0,0.75);
-    max-width: 30%;
+    /*max-width: 30%;*/
     overflow: hidden;
 }
 
