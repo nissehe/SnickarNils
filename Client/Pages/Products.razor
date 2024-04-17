@@ -3,23 +3,7 @@
 @inject NavigationManager navigation
 
 <div class="content-container">
-    <ListHeader Title="My List"
-                HandleAdd="@AddNewProduct"
-                HandleRefresh="@HandleRefresh"
-                RoutePath="/products" />
-    <div class="columns is-multiline is-variable">
-        <div class="column is-8">
-            <ProductList ErrorMessage="@errorMessage"
-                         Products="@products"
-                         SelectProduct="@SelectProduct"
-                         DeleteProduct="@DeleteProduct" />
-        </div>
-    </div>
 
-    <ModalYesNo Message="@modalMessage"
-                OnNo="@CloseModal"
-                OnYes="@DeleteFromModal"
-                Show="@showModal"/>
 </div>
 
 @code {
