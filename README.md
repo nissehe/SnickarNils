@@ -3,7 +3,8 @@
 
 A Blazor static web app feteches collections of image urls and descriptions from an Azure functions API.
 The API in turn expect to find image collections and desciptions in Azure Storage containers.
-The storage account containing the containers must be public.
+The storage account containing the containers must allow blob anonymous access, and the containters must have anonymous read access for the blobs.
+https://learn.microsoft.com/en-us/azure/storage/blobs/anonymous-read-access-configure?tabs=portal
 
 ## Image structure and naming convention
 Place a collection of images in its own storage container.
