@@ -4,25 +4,24 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
-namespace Api
+namespace Api;
+
+internal class ImageCollectionGet
 {
-    internal class ImageCollectionGet
+    private readonly ImageCollectionService _imageCollectionService;
+
+    public ImageCollectionGet(ImageCollectionService imageCollectionService)
     {
-        private readonly ImageCollectionService _imageCollectionService;
+        _imageCollectionService = imageCollectionService;
+    }
 
-        public ImageCollectionGet(ImageCollectionService imageCollectionService)
-        {
-            _imageCollectionService = imageCollectionService;
-        }
+    [FunctionName("ImageSetGet")]
+    public async Task<IActionResult> Run(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ImageCollection/{containerName}")] HttpRequest req,
+        ILogger log, string containerName)
+    {
+        var imageCollections = await _imageCollectionService.GetCollection(containerName);
 
-        [FunctionName("ImageSetGet")]
-        public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ImageCollection/{containerName}")] HttpRequest req,
-            ILogger log, string containerName)
-        {
-            var imageCollections = await _imageCollectionService.GetCollection(containerName);
-
-            return new OkObjectResult(imageCollections);
-        }
+        return new OkObjectResult(imageCollections);
     }
 }

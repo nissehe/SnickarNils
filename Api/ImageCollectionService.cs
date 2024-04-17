@@ -4,155 +4,154 @@ using Azure.Storage.Blobs.Models;
 using Data;
 using Microsoft.Extensions.Logging;
 
-namespace Api
+namespace Api;
+
+internal class ImageCollectionService
 {
-    internal class ImageCollectionService
+    private const string _descriptionBlobName = "description.txt";
+    private const string _coverPhotoBlobNameStart = "cover.";
+
+    private readonly BlobServiceClient _blobServiceClient;
+    private readonly ILogger _log;
+
+    public ImageCollectionService(BlobServiceClient blobServiceClient, ILogger log)
     {
-        private const string _descriptionBlobName = "description.txt";
-        private const string _coverPhotoBlobNameStart = "cover.";
+        _blobServiceClient = blobServiceClient;
+        _log = log;
+    }
 
-        private readonly BlobServiceClient _blobServiceClient;
-        private readonly ILogger _log;
+    public async Task<List<ImageCollectionSummary>> GetSummaries()
+    {
+        var imageSetSummaries = new List<ImageCollectionSummary>();
 
-        public ImageCollectionService(BlobServiceClient blobServiceClient, ILogger log)
+        var containers = _blobServiceClient.GetBlobContainersAsync();
+
+        await foreach (Page<BlobContainerItem> page in containers.AsPages())
         {
-            _blobServiceClient = blobServiceClient;
-            _log = log;
-        }
-
-        public async Task<List<ImageCollectionSummary>> GetSummaries()
-        {
-            var imageSetSummaries = new List<ImageCollectionSummary>();
-
-            var containers = _blobServiceClient.GetBlobContainersAsync();
-
-            await foreach (Page<BlobContainerItem> page in containers.AsPages())
+            foreach (BlobContainerItem container in page.Values)
             {
-                foreach (BlobContainerItem container in page.Values)
-                {
-                    var imageSet = await GetSummary(container.Name);
+                var imageSet = await GetSummary(container.Name);
 
-                    if(imageSet != null)
-                    {
-                        imageSetSummaries.Add(imageSet);
-                    }
+                if(imageSet != null)
+                {
+                    imageSetSummaries.Add(imageSet);
                 }
             }
-
-            return imageSetSummaries;
         }
 
-        public async Task<ImageCollection> GetCollection(string containerName)
+        return imageSetSummaries;
+    }
+
+    public async Task<ImageCollection> GetCollection(string containerName)
+    {
+        var imageCollectionSummary = await GetSummary(containerName);
+
+        var imageUris = GetImageUris(containerName);
+
+        var imageCollection = new ImageCollection(imageCollectionSummary, imageUris);
+
+        return imageCollection;
+    }
+
+    private async Task<ImageCollectionSummary> GetSummary(string containerName)
+    {
+        try
         {
-            var imageCollectionSummary = await GetSummary(containerName);
+            var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
 
-            var imageUris = GetImageUris(containerName);
+            string coverImageUri = GetCoverImageUri(containerClient);
 
-            var imageCollection = new ImageCollection(imageCollectionSummary, imageUris);
+            string description = await GetDescriptionText(containerClient);
 
-            return imageCollection;
-        }
-
-        private async Task<ImageCollectionSummary> GetSummary(string containerName)
-        {
-            try
+            if (coverImageUri == null && description == null)
             {
-                var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
-
-                string coverImageUri = GetCoverImageUri(containerClient);
-
-                string description = await GetDescriptionText(containerClient);
-
-                if (coverImageUri == null && description == null)
-                {
-                    return null;
-                }
-
-                return new ImageCollectionSummary()
-                {
-                    ContainerName = containerName,
-                    CoverImageUri = coverImageUri,
-                    Description = description
-                };
-            }
-            catch (Exception ex)
-            {
-                _log.LogError($"Failed to create ImageSetSummary for {containerName} - {ex.Message}");
                 return null;
             }
-        }
 
-        private List<string> GetImageUris(string containerName)
-        {
-            try
+            return new ImageCollectionSummary()
             {
-                var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
-
-                var imageBlobs = containerClient.GetBlobs().Where(b => !b.Name.Equals(_descriptionBlobName, StringComparison.OrdinalIgnoreCase)
-                                                                    && !b.Name.StartsWith(_coverPhotoBlobNameStart, StringComparison.OrdinalIgnoreCase));
-
-                var imageUris = imageBlobs.OrderBy(b => b.Name)
-                    .Select(b => GetBlobUri(containerClient, b))
-                    .ToList();
-
-                return imageUris;
-            }
-            catch (Exception ex)
-            {
-                _log.LogError($"Failed to get image uris for {containerName} - {ex.Message}");
-                return null;
-            }
+                ContainerName = containerName,
+                CoverImageUri = coverImageUri,
+                Description = description
+            };
         }
-
-        private static async Task<string> GetDescriptionText(BlobContainerClient containerClient)
+        catch (Exception ex)
         {
-            string description = null;
-
-            var descriptionBlob = containerClient.GetBlobs()
-                .Where(b => b.Name.Equals(_descriptionBlobName, StringComparison.OrdinalIgnoreCase))
-                .FirstOrDefault();
-
-            if (descriptionBlob != null)
-            {
-                var descriptionBlobClient = containerClient.GetBlobClient(descriptionBlob.Name);
-                BlobDownloadResult downloadResult = await descriptionBlobClient.DownloadContentAsync();
-                description = downloadResult.Content.ToString();
-            }
-
-            return description;
+            _log.LogError($"Failed to create ImageSetSummary for {containerName} - {ex.Message}");
+            return null;
         }
+    }
 
-        private static string GetCoverImageUri(BlobContainerClient containerClient)
+    private List<string> GetImageUris(string containerName)
+    {
+        try
         {
-            string coverImageUri = null;
+            var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
 
-            var coverImage = containerClient.GetBlobs()
-                .Where(b => b.Name.StartsWith(_coverPhotoBlobNameStart, StringComparison.OrdinalIgnoreCase))
-                .FirstOrDefault();
+            var imageBlobs = containerClient.GetBlobs().Where(b => !b.Name.Equals(_descriptionBlobName, StringComparison.OrdinalIgnoreCase)
+                                                                && !b.Name.StartsWith(_coverPhotoBlobNameStart, StringComparison.OrdinalIgnoreCase));
 
-            if (coverImage != null)
-            {
-                coverImageUri = GetBlobUri(containerClient, coverImage);
-            }
+            var imageUris = imageBlobs.OrderBy(b => b.Name)
+                .Select(b => GetBlobUri(containerClient, b))
+                .ToList();
 
-            return coverImageUri;
+            return imageUris;
         }
-
-        private static string GetBlobUri(BlobContainerClient containerClient, BlobItem blobItem)
+        catch (Exception ex)
         {
-            return new Uri(containerClient.Uri, blobItem.Name).ToString();
+            _log.LogError($"Failed to get image uris for {containerName} - {ex.Message}");
+            return null;
+        }
+    }
+
+    private static async Task<string> GetDescriptionText(BlobContainerClient containerClient)
+    {
+        string description = null;
+
+        var descriptionBlob = containerClient.GetBlobs()
+            .Where(b => b.Name.Equals(_descriptionBlobName, StringComparison.OrdinalIgnoreCase))
+            .FirstOrDefault();
+
+        if (descriptionBlob != null)
+        {
+            var descriptionBlobClient = containerClient.GetBlobClient(descriptionBlob.Name);
+            BlobDownloadResult downloadResult = await descriptionBlobClient.DownloadContentAsync();
+            description = downloadResult.Content.ToString();
         }
 
-        private static BlobItem GetDescriptionBlob(IEnumerable<BlobItem> grossItems)
+        return description;
+    }
+
+    private static string GetCoverImageUri(BlobContainerClient containerClient)
+    {
+        string coverImageUri = null;
+
+        var coverImage = containerClient.GetBlobs()
+            .Where(b => b.Name.StartsWith(_coverPhotoBlobNameStart, StringComparison.OrdinalIgnoreCase))
+            .FirstOrDefault();
+
+        if (coverImage != null)
         {
-            return grossItems.Where(b => b.Name.StartsWith("description.txt", StringComparison.OrdinalIgnoreCase))
-                .FirstOrDefault();
+            coverImageUri = GetBlobUri(containerClient, coverImage);
         }
 
-        private BlobItem GetCoverImageBlob(IEnumerable<BlobItem> grossItems)
-        {
-            return grossItems.Where(b => b.Name.StartsWith("cover.", StringComparison.OrdinalIgnoreCase))
-                .FirstOrDefault();
-        }
+        return coverImageUri;
+    }
+
+    private static string GetBlobUri(BlobContainerClient containerClient, BlobItem blobItem)
+    {
+        return new Uri(containerClient.Uri, blobItem.Name).ToString();
+    }
+
+    private static BlobItem GetDescriptionBlob(IEnumerable<BlobItem> grossItems)
+    {
+        return grossItems.Where(b => b.Name.StartsWith("description.txt", StringComparison.OrdinalIgnoreCase))
+            .FirstOrDefault();
+    }
+
+    private BlobItem GetCoverImageBlob(IEnumerable<BlobItem> grossItems)
+    {
+        return grossItems.Where(b => b.Name.StartsWith("cover.", StringComparison.OrdinalIgnoreCase))
+            .FirstOrDefault();
     }
 }
