@@ -19,12 +19,13 @@
     padding: 0.3rem 0;
     background-color: var(--accent-color);
 }
-
     .banner h1 {
         color: var(--background-color);
         font-size: 2rem;
     }
 
 .main-content {
-    padding: 2% 10% 5%;
+    max-width: 960px;
+    margin-inline: auto;
+    padding: 2rem;
 }
