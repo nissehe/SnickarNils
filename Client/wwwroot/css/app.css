@@ -18,6 +18,9 @@
     flex-flow: column;
     padding: 0.3rem 0;
     background-color: var(--accent-color);
+    border-bottom-width: 1px;
+    border-bottom-style: solid;
+    border-bottom-color: var(--text-color);
 }
     .banner h1 {
         color: var(--background-color);
