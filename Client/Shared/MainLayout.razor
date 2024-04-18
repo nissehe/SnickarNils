@@ -18,11 +18,18 @@
 
     protected override void OnInitialized()
     {
+        CheckLocation();
+
         NavigationManager.LocationChanged += LocationChanged;
         base.OnInitialized();
     }
 
     private void LocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        CheckLocation();
+    }
+
+    private void CheckLocation()
     {
         backButtonClass = NavigationManager.Uri.Contains("overview")
             ? string.Empty
