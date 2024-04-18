@@ -4,7 +4,9 @@
 
 @if (imageCollection != null)
 {
-    @imageCollection.Description
+    <div class="description">
+        @imageCollection.Description
+    </div>
 
     if (!string.IsNullOrEmpty(imageCollection.CoverImageUri))
     {
