@@ -28,7 +28,7 @@ internal class ImageCollectionService
 
         await foreach (Page<BlobContainerItem> page in containers.AsPages())
         {
-            foreach (BlobContainerItem container in page.Values)
+            foreach (BlobContainerItem container in page.Values.OrderBy(c => c.Name))
             {
                 var imageSet = await GetSummary(container.Name);
 
