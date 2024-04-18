@@ -2,11 +2,19 @@
 @inject HttpClient http
 @inject NavigationManager navigation
 
-<h3>ImageCollection</h3>
-
 @if (imageCollection != null)
 {
     @imageCollection.Description
+
+    if (!string.IsNullOrEmpty(imageCollection.CoverImageUri))
+    {
+        <img src="@imageCollection.CoverImageUri" />
+    }
+
+    @foreach (string uri in imageCollection.ImageUris)
+    {
+        <img src="@uri" />
+    }
 }
 
 @code {
