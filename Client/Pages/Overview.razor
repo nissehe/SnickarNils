@@ -2,15 +2,19 @@
 @inject HttpClient http
 @inject NavigationManager navigation
 
-<div class="covers">
     @if (imageCollectionSummaries != null)
     {
-        foreach (ImageCollectionSummary imageCollectionSummary in imageCollectionSummaries)
-        {
-            <CollectionCover ImageCollectionSummary="imageCollectionSummary"></CollectionCover>
-        }
+        <div class="covers">
+            @foreach (ImageCollectionSummary imageCollectionSummary in imageCollectionSummaries)
+            {
+                <CollectionCover ImageCollectionSummary="imageCollectionSummary"></CollectionCover>
+            }
+        </div>
     }
-</div>
+    else
+    {
+        <i class="fas fa-circle-notch fa-spin fa-lg" style="margin:1rem 0.85rem;"></i>
+    }
 
 @code {
     private List<ImageCollectionSummary> imageCollectionSummaries;
