@@ -1,9 +1,43 @@
 ﻿@inherits LayoutComponentBase
+@implements IDisposable
+@inject NavigationManager NavigationManager
+
 <main class="main-layout">
     <div class="banner">
+        <i class="@backButtonClass" @onclick="() => NavigateBack()"></i>
         <h1>Snickar~Nils</h1>
+        <i></i>
     </div>
     <div class="main-content">
         @Body
     </div>
 </main>
+
+@code{
+    private string backButtonClass;
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += LocationChanged;
+        base.OnInitialized();
+    }
+
+    private void LocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        backButtonClass = NavigationManager.Uri.Contains("overview")
+            ? string.Empty
+            : "far fa-arrow-alt-circle-left fa-2x";
+
+        StateHasChanged();
+    }
+
+    void IDisposable.Dispose()
+    {
+        NavigationManager.LocationChanged -= LocationChanged;
+    }
+
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}
