@@ -6,6 +6,10 @@ namespace Data
     {
         public List<string> ImageUris { get; set; }
 
+        public ImageCollection()
+        {
+        }
+
         public ImageCollection(ImageCollectionSummary imageCollectionSummary, List<string> imageUris)
         {
             ContainerName = imageCollectionSummary.ContainerName;
