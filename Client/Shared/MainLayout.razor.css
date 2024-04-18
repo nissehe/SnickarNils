@@ -10,6 +10,7 @@
 }
     .banner h1 {
         font-size: 2rem;
+        outline: none;
     }
 
     .banner i {
