@@ -12,3 +12,4 @@ Name the cover photo _cover.*_
 Name the blob containing the collection's description _description.txt_
 The container must contain at least one of the two special blobs above to be considered by the application.
 The rest of the images in the container are displayed in name order.
+The summaries on the overview page are displayed in container name order, within the pages from the storage api.
