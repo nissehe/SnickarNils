@@ -1,6 +1,5 @@
 File in the storage with the display order of the containers
-Better colors
+Other colors?
 Better fonts
-Copyright footer
 Custom domain
 Upload more images
