@@ -1,11 +1,7 @@
 ﻿.description {
-    margin-bottom: 1rem;
+    margin: 1rem;
     color: var(--text-color);
 }
 
 img {
-    border: solid;
-    border-width: 1px;
-    border-radius: 4px;
-    border-color: var(--accent-color);
 }

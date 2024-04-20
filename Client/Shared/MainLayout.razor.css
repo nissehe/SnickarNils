@@ -8,6 +8,7 @@
     border-bottom-style: solid;
     border-bottom-color: var(--text-color);
     box-shadow: 0px 3px 8px -1px rgba(0,0,0,0.75);
+    width:100%;
 }
     .banner h1 {
         font-size: 2rem;
@@ -22,5 +23,5 @@
 .main-content {
     max-width: 960px;
     margin-inline: auto;
-    padding: 2rem;
+    padding-top: 2rem;
 }
