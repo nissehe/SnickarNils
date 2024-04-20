@@ -3,5 +3,11 @@
     color: var(--text-color);
 }
 
+.img-container {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns:repeat(auto-fit, minmax(1fr, 10fr));
+}
+
 img {
 }
