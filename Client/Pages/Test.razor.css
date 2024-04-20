@@ -1,0 +1,12 @@
+﻿.container{
+    border: solid;
+    border-width: 3px;
+    border-color: red;
+
+    display: flex;
+    max-height:90vh;
+}
+
+    .container img {
+        object-fit: contain;
+    }
