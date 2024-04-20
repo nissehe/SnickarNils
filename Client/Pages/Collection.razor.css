@@ -5,7 +5,7 @@
 
 .img-wrapper {
     display: flex;
-    max-height: 90vh;
+    max-height: 100vh;
     margin-bottom: 1rem;
 }
     .img-wrapper img {
