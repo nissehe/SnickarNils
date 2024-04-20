@@ -8,17 +8,15 @@
         @imageCollection.Description
     </div>
 
-    <div class="img-container">
-        @if (!string.IsNullOrEmpty(imageCollection.CoverImageUri))
-        {
-            <img src="@imageCollection.CoverImageUri" />
-        }
+    if (!string.IsNullOrEmpty(imageCollection.CoverImageUri))
+    {
+        <img src="@imageCollection.CoverImageUri" />
+    }
 
-        @foreach (string uri in imageCollection.ImageUris)
-        {
-            <img src="@uri" />
-        }
-    </div>
+    @foreach (string uri in imageCollection.ImageUris)
+    {
+        <img src="@uri" />
+    }
 }
 else
 {
