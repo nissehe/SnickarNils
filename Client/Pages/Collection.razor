@@ -6,12 +6,16 @@
 {
     if (!string.IsNullOrEmpty(imageCollection.CoverImageUri))
     {
-        <img src="@imageCollection.CoverImageUri" />
+        <div class="img-wrapper">
+            <img src="@imageCollection.CoverImageUri" />
+        </div>
     }
 
     @foreach (string uri in imageCollection.ImageUris)
     {
-        <img src="@uri" />
+        <div class="img-wrapper">
+            <img src="@uri" />
+        </div>
     }
 }
 else
