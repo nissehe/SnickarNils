@@ -4,10 +4,6 @@
 
 @if (imageCollection != null)
 {
-    <div class="description">
-        @imageCollection.Description
-    </div>
-
     if (!string.IsNullOrEmpty(imageCollection.CoverImageUri))
     {
         <img src="@imageCollection.CoverImageUri" />
