@@ -1,0 +1,11 @@
+﻿@page "/reload"
+@inject HttpClient http
+
+<h3>Reloaded</h3>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await http.PostAsync("api/reload", null);
+    }
+}

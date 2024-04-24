@@ -14,14 +14,22 @@ internal class ImageCollectionService
     private readonly BlobServiceClient _blobServiceClient;
     private readonly ILogger _log;
 
+    private Cache _cache;
+
     public ImageCollectionService(BlobServiceClient blobServiceClient, ILogger log)
     {
         _blobServiceClient = blobServiceClient;
         _log = log;
+        _cache = new();
     }
 
     public async Task<List<ImageCollectionSummary>> GetSummaries()
     {
+        if(_cache.ImageCollectionSummaries != null)
+        {
+            return _cache.ImageCollectionSummaries;
+        }
+
         var imageSetSummaries = new List<ImageCollectionSummary>();
 
         var containers = _blobServiceClient.GetBlobContainersAsync();
@@ -39,18 +47,36 @@ internal class ImageCollectionService
             }
         }
 
+        _cache.ImageCollectionSummaries = imageSetSummaries;
+
         return imageSetSummaries;
     }
 
     public async Task<ImageCollection> GetCollection(string containerName)
     {
+        var collectionCache = _cache.GetImageCollection(containerName);
+
+        if (collectionCache != null)
+        {
+            return collectionCache;
+        }
+
         var imageCollectionSummary = await GetSummary(containerName);
 
         var imageUris = GetImageUris(containerName);
 
         var imageCollection = new ImageCollection(imageCollectionSummary, imageUris);
 
+        _cache.AddImageCollection(containerName, imageCollection);
+
         return imageCollection;
+    }
+
+    public async Task ReloadCache()
+    {
+        _cache.Wipe();
+
+        await GetSummaries();
     }
 
     private async Task<ImageCollectionSummary> GetSummary(string containerName)
