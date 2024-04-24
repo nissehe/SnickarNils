@@ -13,3 +13,6 @@ Name the blob containing the collection's description _description.txt_
 The container must contain at least one of the two special blobs above to be considered by the application.
 The rest of the images in the container are displayed in name order.
 The summaries on the overview page are displayed in container name order, within the pages from the storage api.
+
+## Cache
+The API keeps a cache of the contents of the Azure storage containers. To wipe the cache after making changes to the containers, go to the page /reload
