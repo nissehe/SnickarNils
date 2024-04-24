@@ -8,6 +8,7 @@
     cursor: pointer;
     box-shadow: 3px 3px 7px -1px rgba(0,0,0,0.75);
     overflow: hidden;
+    margin-bottom: 1rem;
 }
 
     .tile:hover {
@@ -22,5 +23,4 @@
     color: var(--text-color);
     background-color: var(--background-color);
     padding: 1rem;
-    height:100%;
 }
