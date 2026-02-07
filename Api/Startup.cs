@@ -5,8 +5,7 @@ using System.Diagnostics;
 
 [assembly: FunctionsStartup(typeof(Api.Startup))]
 
-namespace Api;
-
+namespace Api; 
 public class Startup : FunctionsStartup
 {
     public override void Configure(IFunctionsHostBuilder builder)

@@ -10,6 +10,8 @@ internal class ImageCollectionService
 {
     private const string _descriptionBlobName = "description.txt";
     private const string _coverPhotoBlobNameStart = "cover.";
+    private const string _metaDataContainerName = "metadata";
+    private const string _imageCollectionOrderBlobName = "image_collection_order.txt";
 
     private readonly BlobServiceClient _blobServiceClient;
     private readonly ILogger _log;
@@ -21,6 +23,8 @@ internal class ImageCollectionService
         _blobServiceClient = blobServiceClient;
         _log = log;
         _cache = new();
+
+        System.Diagnostics.Debug.WriteLine("ImageCollectionService constructor");
     }
 
     public async Task<List<ImageCollectionSummary>> GetSummaries()
@@ -30,7 +34,7 @@ internal class ImageCollectionService
             return _cache.ImageCollectionSummaries;
         }
 
-        var imageSetSummaries = new List<ImageCollectionSummary>();
+        var imageCollectionSummaries = new List<ImageCollectionSummary>();
 
         var containers = _blobServiceClient.GetBlobContainersAsync();
 
@@ -42,14 +46,18 @@ internal class ImageCollectionService
 
                 if(imageSet != null)
                 {
-                    imageSetSummaries.Add(imageSet);
+                    imageCollectionSummaries.Add(imageSet);
                 }
             }
         }
 
-        _cache.ImageCollectionSummaries = imageSetSummaries;
+        var imageCollectionOrder = await GetImageCollectionOrder();
 
-        return imageSetSummaries;
+        var orderedImageCollectionSummaries = OrderImageCollections(imageCollectionSummaries, imageCollectionOrder);
+
+        _cache.ImageCollectionSummaries = orderedImageCollectionSummaries;
+
+        return orderedImageCollectionSummaries;
     }
 
     public async Task<ImageCollection> GetCollection(string containerName)
@@ -128,6 +136,53 @@ internal class ImageCollectionService
             _log.LogError($"Failed to get image uris for {containerName} - {ex.Message}");
             return null;
         }
+    }
+
+    private async Task<List<string>> GetImageCollectionOrder()
+    {
+        try
+        {
+            var metaDataContainer = _blobServiceClient?.GetBlobContainerClient(_metaDataContainerName);
+
+            var imageCollectionOrderClient = metaDataContainer?.GetBlobClient(_imageCollectionOrderBlobName);
+
+            BlobDownloadResult downloadResult = await imageCollectionOrderClient?.DownloadContentAsync();
+            var imageSetOrder = downloadResult?.Content?.ToString();
+
+            var imageCollectionOrderList = imageSetOrder
+                ?.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+                ?.ToList();
+
+            return imageCollectionOrderList ?? new List<string>();
+        }
+        catch (Exception)
+        {
+            return new List<string>();
+        }
+    }
+
+    private List<ImageCollectionSummary> OrderImageCollections(List<ImageCollectionSummary> imageCollections, List<string> imageCollectionOrder)
+    {
+
+        var sortedCollections = new List<ImageCollectionSummary>();
+
+        foreach(string containerName in imageCollectionOrder)
+        {
+            var imageCollection = imageCollections.FirstOrDefault(x => x.ContainerName == containerName);
+
+            if(imageCollection == null)
+            {
+                continue;
+            }
+
+            imageCollections.Remove(imageCollection);
+
+            sortedCollections.Add(imageCollection);
+        }
+
+        sortedCollections.AddRange(imageCollections);
+
+        return sortedCollections;
     }
 
     private static async Task<string> GetDescriptionText(BlobContainerClient containerClient)
