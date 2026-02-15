@@ -1,18 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
+    <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.19.1" />
-    <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
-    <PackageReference Include="Microsoft.Extensions.Azure" Version="1.7.2" />
-    <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.3.9" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.12.0" OutputItemType="Analyzer" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.14.0" />
+    <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.0.13" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.27.0" />
+    <PackageReference Include="Microsoft.Extensions.Azure" Version="1.13.1" />
   </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Data\Data.csproj" />
   </ItemGroup>
+
   <ItemGroup>
     <None Update="host.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
