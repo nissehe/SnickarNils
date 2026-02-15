@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text.Json;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
@@ -21,9 +20,7 @@ internal class ImageCollectionSummariesGet
         var summaries = await _imageCollectionService.GetSummaries();
 
         var response = req.CreateResponse(HttpStatusCode.OK);
-        response.Headers.Add("Content-Type", "application/json");
-
-        await response.WriteStringAsync(JsonSerializer.Serialize(summaries));
+        await response.WriteAsJsonAsync(summaries);
 
         return response;
     }

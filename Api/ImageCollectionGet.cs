@@ -2,7 +2,6 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using System.Net;
-using System.Text.Json;
 
 namespace Api;
 
@@ -23,9 +22,7 @@ internal class ImageCollectionGet
         var imageCollections = await _imageCollectionService.GetCollection(containerName);
 
         var response = req.CreateResponse(HttpStatusCode.OK);
-        response.Headers.Add("Content-Type", "application/json");
-
-        await response.WriteStringAsync(JsonSerializer.Serialize(imageCollections));
+        await response.WriteAsJsonAsync(imageCollections);
 
         return response;
     }

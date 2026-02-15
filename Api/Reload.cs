@@ -20,7 +20,6 @@ internal class Reload
         await _imageCollectionService.ReloadCache();
 
         var response = req.CreateResponse(HttpStatusCode.OK);
-        response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
         await response.WriteStringAsync("ok");
 
         return response;
