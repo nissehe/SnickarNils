@@ -9,12 +9,10 @@ namespace Api;
 internal class ImageCollectionGet
 {
     private readonly ImageCollectionService _imageCollectionService;
-    private readonly ILogger<ImageCollectionGet> _logger;
 
-    public ImageCollectionGet(ImageCollectionService imageCollectionService, ILogger<ImageCollectionGet> logger)
+    public ImageCollectionGet(ImageCollectionService imageCollectionService)
     {
         _imageCollectionService = imageCollectionService;
-        _logger = logger;
     }
 
     [Function("ImageSetGet")]
@@ -27,13 +25,7 @@ internal class ImageCollectionGet
         var response = req.CreateResponse(HttpStatusCode.OK);
         response.Headers.Add("Content-Type", "application/json");
 
-        var options = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-        };
-
-        await response.WriteStringAsync(JsonSerializer.Serialize(imageCollections, options));
+        await response.WriteStringAsync(JsonSerializer.Serialize(imageCollections));
 
         return response;
     }
