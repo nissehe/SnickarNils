@@ -1,6 +1,5 @@
 
 # Photo gallery
-
 A Blazor static web app feteches collections of image urls and descriptions from an Azure functions API.
 The API in turn expect to find image collections and desciptions in Azure Storage containers.
 The storage account containing the containers must allow blob anonymous access, and the containters must have anonymous read access for the blobs.
@@ -19,3 +18,6 @@ Containers not included in the list will be displayed in alphabetical order afte
 
 ## Cache
 The API keeps a cache of the contents of the Azure storage containers. To wipe the cache after making changes to the containers, go to the page /reload
+
+## Deploy
+CI/CD via Azure pipeline
