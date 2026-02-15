@@ -1,7 +1,7 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
+using System.Net;
+using System.Text.Json;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 
 namespace Api;
@@ -9,20 +9,33 @@ namespace Api;
 internal class ImageCollectionSummariesGet
 {
     private readonly ImageCollectionService _imageCollectionService;
+    private readonly ILogger<ImageCollectionSummariesGet> _logger;
 
-    public ImageCollectionSummariesGet(ImageCollectionService imageCollectionService)
+    public ImageCollectionSummariesGet(ImageCollectionService imageCollectionService, ILogger<ImageCollectionSummariesGet> logger)
     {
         _imageCollectionService = imageCollectionService;
+        _logger = logger;
     }
 
-    [FunctionName("ImageCollectionSummariesGet")]
-    public async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ImageCollectionSummaries")] HttpRequest req,
-        ILogger log)
+    [Function("ImageCollectionSummariesGet")]
+    public async Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "ImageCollectionSummaries")] HttpRequestData req)
     {
+        _logger.LogInformation("Handling ImageCollectionSummariesGet request");
 
         var summaries = await _imageCollectionService.GetSummaries();
 
-        return new OkObjectResult(summaries);
+        var response = req.CreateResponse(HttpStatusCode.OK);
+        response.Headers.Add("Content-Type", "application/json");
+
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        };
+
+        await response.WriteStringAsync(JsonSerializer.Serialize(summaries, options));
+
+        return response;
     }
 }
