@@ -14,11 +14,11 @@ internal class ImageCollectionService
     private const string _imageCollectionOrderBlobName = "image_collection_order.txt";
 
     private readonly BlobServiceClient _blobServiceClient;
-    private readonly ILogger _log;
+    private readonly ILogger<ImageCollectionService> _log;
 
     private Cache _cache;
 
-    public ImageCollectionService(BlobServiceClient blobServiceClient, ILogger log)
+    public ImageCollectionService(BlobServiceClient blobServiceClient, ILogger<ImageCollectionService> log)
     {
         _blobServiceClient = blobServiceClient;
         _log = log;
