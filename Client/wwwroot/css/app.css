@@ -11,3 +11,20 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
+
+.tile {
+    display: flex;
+    flex-direction: column;
+    border: solid;
+    border-width: 1px;
+    border-radius: 4px;
+    border-color: var(--accent-color);
+    cursor: pointer;
+    box-shadow: 3px 3px 7px -1px rgba(0,0,0,0.75);
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+    .tile:hover {
+        box-shadow: 2px 2px 6px -1px rgba(0,0,0,0.75);
+    }

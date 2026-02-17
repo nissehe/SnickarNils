@@ -1,0 +1,78 @@
+:root {
+  --skeleton-bg: #f3f3f3;
+  --skeleton-highlight: #ececec;
+  --skeleton-radius: 8px;
+  --skeleton-duration: 1.4s;
+  --skeleton-gap: 1rem;
+}
+
+/* Grid aligns with existing .covers layout; tweak as needed */
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--skeleton-gap);
+  padding: 0.5rem 0;
+}
+
+.skeleton-card {
+  background: linear-gradient(180deg, var(--skeleton-bg), var(--skeleton-bg));
+  border-radius: var(--skeleton-radius);
+  padding: 0.6rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  overflow: hidden;
+}
+
+/* image placeholder */
+.skeleton-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: calc(var(--skeleton-radius) - 2px);
+  background: linear-gradient(90deg, var(--skeleton-bg) 8%, var(--skeleton-highlight) 18%, var(--skeleton-bg) 33%);
+  background-size: 200% 100%;
+  animation: shimmer var(--skeleton-duration) linear infinite;
+}
+
+/* title/lines */
+.skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  width: 100%;
+  background: linear-gradient(90deg, var(--skeleton-bg) 8%, var(--skeleton-highlight) 18%, var(--skeleton-bg) 33%);
+  background-size: 200% 100%;
+  animation: shimmer var(--skeleton-duration) linear infinite;
+}
+
+.skeleton-line.short {
+  width: 60%;
+}
+
+/* Staggered delays for a natural effect */
+.skeleton-card:nth-child(1) .skeleton-image,
+.skeleton-card:nth-child(1) .skeleton-line { animation-delay: 0s; }
+.skeleton-card:nth-child(2) .skeleton-image,
+.skeleton-card:nth-child(2) .skeleton-line { animation-delay: 0.08s; }
+.skeleton-card:nth-child(3) .skeleton-image,
+.skeleton-card:nth-child(3) .skeleton-line { animation-delay: 0.16s; }
+.skeleton-card:nth-child(4) .skeleton-image,
+.skeleton-card:nth-child(4) .skeleton-line { animation-delay: 0.24s; }
+.skeleton-card:nth-child(5) .skeleton-image,
+.skeleton-card:nth-child(5) .skeleton-line { animation-delay: 0.32s; }
+.skeleton-card:nth-child(6) .skeleton-image,
+.skeleton-card:nth-child(6) .skeleton-line { animation-delay: 0.40s; }
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Reduce motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-image,
+  .skeleton-line {
+    animation: none;
+    background: var(--skeleton-bg);
+  }
+}
