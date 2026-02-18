@@ -1,7 +1,9 @@
 ﻿.banner {
-    display: flex;
+    display: grid;
+    grid-template-columns: 3rem 1fr 3rem; /* left/right spacers to accommodate fixed button */
     align-items: center;
-    padding: 0.3rem 0;
+    padding: 0;
+    height: 3.5rem;
     background-color: var(--accent-color);
     color: var(--background-color);
     border-bottom-width: 1px;
@@ -10,12 +12,14 @@
     box-shadow: 0px 3px 8px -1px rgba(0,0,0,0.75);
 }
     .banner h1 {
+        grid-column: 2; /* place title in center column */
+        justify-self: center;
         font-size: 2rem;
         outline: none;
     }
 
     .banner i {
-        flex: 1;
+        /* keep an inline element available if markup uses it for balance/spacing */
         padding-left: 0.6rem;
     }
 
@@ -23,4 +27,30 @@
     max-width: 960px;
     margin-inline: auto;
     padding-top: 1rem;
+}
+
+.main-layout {
+    position: relative;
+}
+
+/* Fixed back button that follows when page scrolls */
+.back-button {
+    position: fixed;
+    top: 0.6rem;
+    left: 0.5rem;
+    z-index: 1000;
+    background: transparent;
+    border: none;
+    padding: 0.25rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    color: var(--background-color);
+}
+
+/* Slight hit target and visibility for small icons */
+.back-button i {
+    pointer-events: none;
 }

@@ -3,11 +3,17 @@
 @inject NavigationManager NavigationManager
 
 <main class="main-layout">
+    @if (!string.IsNullOrEmpty(backButtonClass))
+    {
+        <button class="back-button" type="button" @onclick="NavigateBack" aria-label="Back to overview">
+            <i class="@backButtonClass"  style="font-size:2rem" aria-hidden="true"></i>
+        </button>
+    }
+
     <div class="banner">
-        <i class="@backButtonClass" @onclick="() => NavigateBack()"></i>
         <h1>Snickar~Nils</h1>
-        <i></i>
     </div>
+
     <div class="main-content">
         @Body
     </div>
