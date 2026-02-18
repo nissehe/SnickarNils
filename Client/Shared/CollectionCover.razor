@@ -2,7 +2,7 @@
 
 @if (ImageCollectionSummary != null)
 {
-    <div class="tile" @onclick="() => ViewCollection()">
+    <button class="tile" type="button" @onclick="ViewCollection" aria-label="@ImageCollectionSummary.Description">
         <div class="image">
             <img src="@ImageCollectionSummary.CoverImageUri" />
         </div>
@@ -10,7 +10,7 @@
         <div class="description">
             @ImageCollectionSummary.Description
         </div>
-    </div>
+    </button>
 }
 else
 {
