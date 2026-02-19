@@ -20,7 +20,6 @@
 .image {
     position: relative;
     overflow: hidden;
-    border-radius: 6px;
     background-color: var(--background-color);
 }
 

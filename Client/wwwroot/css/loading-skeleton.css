@@ -1,7 +1,6 @@
 :root {
   --skeleton-bg: #f3f3f3;
   --skeleton-highlight: #ececec;
-  --skeleton-radius: 8px;
   --skeleton-duration: 3s;
   --skeleton-gap: 1rem;
 }
@@ -16,7 +15,6 @@
 
 .skeleton-card {
   background: linear-gradient(180deg, var(--skeleton-bg), var(--skeleton-bg));
-  border-radius: var(--skeleton-radius);
   padding: 0.6rem;
   box-shadow: 0 1px 2px rgba(0,0,0,0.03);
   display: flex;
@@ -29,7 +27,6 @@
 .skeleton-image {
   width: 100%;
   aspect-ratio: 16 / 9;
-  border-radius: calc(var(--skeleton-radius) - 2px);
   background: linear-gradient(90deg, var(--skeleton-bg) 8%, var(--skeleton-highlight) 18%, var(--skeleton-bg) 33%);
   background-size: 200% 100%;
   animation: shimmer var(--skeleton-duration) linear infinite;
