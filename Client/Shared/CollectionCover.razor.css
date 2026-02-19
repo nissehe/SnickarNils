@@ -7,3 +7,48 @@
     background-color: var(--background-color);
     padding: 1rem;
 }
+
+.tile {
+    display: block;
+    border: none;
+    background: transparent;
+    padding: 0;
+    text-align: left;
+    cursor: pointer;
+}
+
+.image {
+    position: relative;
+    overflow: hidden;
+    border-radius: 6px;
+    background-color: var(--background-color);
+}
+
+.image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Watermark badge in the top-right corner of the cover image */
+.watermark {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(0, 0, 0, 0.4);
+    color: var(--background-color);
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.35rem;
+    font-size: 0.9rem;
+    line-height: 1;
+    z-index: 10;
+}
+
+/* Slightly bolder count for emphasis */
+.watermark .count {
+    font-weight: 600;
+}

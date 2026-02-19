@@ -4,7 +4,11 @@
 {
     <button class="tile" type="button" @onclick="ViewCollection" aria-label="@ImageCollectionSummary.Description">
         <div class="image">
-            <img src="@ImageCollectionSummary.CoverImageUri" />
+            <img src="@ImageCollectionSummary.CoverImageUri" alt="@ImageCollectionSummary.Description" />
+            <div class="watermark" aria-hidden="true">
+                <i class="far fa-images" aria-hidden="true"></i>
+                <span class="count">@ImageCollectionSummary.ImageCount</span>
+            </div>
         </div>
 
         <div class="description">

@@ -97,6 +97,11 @@ internal class ImageCollectionService
 
             string description = await GetDescriptionText(containerClient);
 
+            // Get count of images for the summary watermark
+            var imageUris = GetImageUris(containerName);
+            int imageCount = imageUris?.Count ?? 0;
+            imageCount++; // The cover image
+
             if (coverImageUri == null && description == null)
             {
                 return null;
@@ -106,7 +111,8 @@ internal class ImageCollectionService
             {
                 ContainerName = containerName,
                 CoverImageUri = coverImageUri,
-                Description = description
+                Description = description,
+                ImageCount = imageCount
             };
         }
         catch (Exception ex)
