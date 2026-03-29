@@ -1,0 +1,147 @@
+@page "/upload"
+@using Microsoft.AspNetCore.Components.Forms
+@inject HttpClient http
+@inject NavigationManager navigation
+
+<h3>Upload new image collection</h3>
+
+<div class="form-row">
+    <label>Container name (lowercase, no spaces):</label>
+    <input @bind="containerName" />
+</div>
+
+<div class="form-row">
+    <label>Description (optional):</label>
+    <textarea @bind="description" rows="4"></textarea>
+</div>
+
+<div class="form-row">
+    <label>Cover image (single)</label>
+    <InputFile OnChange="OnCoverSelected" />
+    @if (!string.IsNullOrEmpty(coverName))
+    {
+        <div>Selected cover: @coverName</div>
+    }
+</div>
+
+<div class="form-row">
+    <label>Other images (multiple)</label>
+    <InputFile OnChange="OnImagesSelected" multiple />
+    @if (imageNames?.Any() == true)
+    {
+        <div>Selected images:
+            <ul>
+                @foreach (var n in imageNames)
+                {
+                    <li>@n</li>
+                }
+            </ul>
+        </div>
+    }
+</div>
+
+<div style="margin-top:1rem;">
+    <button @onclick="UploadCollection" disabled="@isUploading">Upload</button>
+    <button @onclick="Cancel" disabled="@isUploading">Cancel</button>
+</div>
+
+@if (!string.IsNullOrEmpty(status))
+{
+    <div style="margin-top:1rem;">@status</div>
+}
+
+@code {
+    private const long MaxFileSize = 20 * 1024 * 1024; // 20 MB per file
+    private string containerName;
+    private string description;
+    private IBrowserFile coverFile;
+    private List<IBrowserFile> otherFiles = new();
+    private string coverName;
+    private List<string> imageNames = new();
+    private bool isUploading;
+    private string status;
+
+    private void Cancel()
+    {
+        navigation.NavigateTo("/");
+    }
+
+    private void OnCoverSelected(InputFileChangeEventArgs e)
+    {
+        coverFile = e.File;
+        coverName = coverFile?.Name;
+    }
+
+    private void OnImagesSelected(InputFileChangeEventArgs e)
+    {
+        otherFiles = e.GetMultipleFiles().ToList();
+        imageNames = otherFiles.Select(f => f.Name).ToList();
+    }
+
+    private async Task<string> ReadFileAsBase64(IBrowserFile file)
+    {
+        if (file == null) return null;
+
+        using var ms = new MemoryStream();
+        var stream = file.OpenReadStream(MaxFileSize);
+        await stream.CopyToAsync(ms);
+        return Convert.ToBase64String(ms.ToArray());
+    }
+
+    private async Task UploadCollection()
+    {
+        if (string.IsNullOrWhiteSpace(containerName))
+        {
+            status = "Container name is required.";
+            return;
+        }
+
+        isUploading = true;
+        status = "Preparing files...";
+
+        try
+        {
+            var coverBase64 = await ReadFileAsBase64(coverFile);
+
+            var imageDtos = new List<object>();
+            foreach (var f in otherFiles)
+            {
+                var b64 = await ReadFileAsBase64(f);
+                imageDtos.Add(new { FileName = f.Name, Base64 = b64 });
+            }
+
+            var payload = new
+            {
+                ContainerName = containerName.Trim(),
+                Description = description ?? string.Empty,
+                CoverFileName = coverFile?.Name,
+                CoverBase64 = coverBase64,
+                Images = imageDtos
+            };
+
+            status = "Uploading to server...";
+            var resp = await http.PostAsJsonAsync("api/upload-collection", payload);
+
+            if (resp.IsSuccessStatusCode)
+            {
+                status = "Upload successful. Reloading overview...";
+                // call reload to refresh backend cache, then navigate to overview
+                await http.PostAsync("api/reload", null);
+                navigation.NavigateTo("/overview");
+            }
+            else
+            {
+                var text = await resp.Content.ReadAsStringAsync();
+                status = $"Upload failed: {resp.StatusCode} - {text}";
+            }
+        }
+        catch (Exception ex)
+        {
+            status = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isUploading = false;
+        }
+    }
+}
