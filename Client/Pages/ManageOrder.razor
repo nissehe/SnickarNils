@@ -3,7 +3,7 @@
 @inject NavigationManager navigation
 @inject IJSRuntime js
 
-<h3>Manage collection order</h3>
+<h3 class="title">Manage collection order</h3>
 
 @if (!isUnlocked)
 {
@@ -11,51 +11,51 @@
 }
 else
 {
-    @if (summaries == null)
-    {
-        <p>Loading...</p>
-    }
-    else if (!summaries.Any())
-    {
-        <p>No collections found.</p>
-    }
-    else
-    {
-        <div class="manage-list">
-            @for (int i = 0; i < summaries.Count; i++)
-            {
-                var item = summaries[i];
-                var index = i;
-                <div class="manage-item">
-                    <div class="thumb">
-                        @if (!string.IsNullOrEmpty(item.CoverImageUri))
-                        {
-                            <img src="@item.CoverImageUri" alt="@item.ContainerName" />
-                        }
-                    </div>
-                    <div class="meta">
-                        <div class="name">@item.ContainerName</div>
-                        <div class="desc">@item.Description</div>
-                    </div>
-                    <div class="controls">
-                        <button type="button" @onclick="() => MoveUp(index)" disabled="@(index == 0)">▲</button>
-                        <button type="button" @onclick="() => MoveDown(index)" disabled="@(index == summaries.Count - 1)">▼</button>
-                        <button type="button" class="danger" @onclick="() => DeleteCollection(index)">🗑</button>
-                    </div>
-                </div>
-            }
-        </div>
-
-        <div class="actions">
-            <button class="save" @onclick="Save" disabled="@(isSaving)">Save order</button>
-            <button class="cancel" @onclick="NavigateToOverview">Cancel</button>
-        </div>
-
-        @if (!string.IsNullOrEmpty(statusMessage))
+        @if (summaries == null)
         {
-            <div class="status">@statusMessage</div>
+            <p>Loading...</p>
         }
-    }
+        else if (!summaries.Any())
+        {
+            <p>No collections found.</p>
+        }
+        else
+        {
+            <div class="manage-list">
+                @for (int i = 0; i < summaries.Count; i++)
+                {
+                    var item = summaries[i];
+                    var index = i;
+                    <div class="manage-item">
+                        <div class="thumb">
+                            @if (!string.IsNullOrEmpty(item.CoverImageUri))
+                            {
+                                <img src="@item.CoverImageUri" alt="@item.ContainerName" />
+                            }
+                        </div>
+                        <div class="meta">
+                            <div class="name">@item.ContainerName</div>
+                            <div class="desc">@item.Description</div>
+                        </div>
+                        <div class="controls">
+                            <button type="button" class="secondary small" @onclick="() => MoveUp(index)" disabled="@(index == 0)">▲</button>
+                            <button type="button" class="secondary small" @onclick="() => MoveDown(index)" disabled="@(index == summaries.Count - 1)">▼</button>
+                            <button type="button" class="danger small" @onclick="() => DeleteCollection(index)">🗑</button>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="actions" style="margin-top:1rem">
+                <button class="primary" @onclick="Save" disabled="@(isSaving)">Save order</button>
+                <button class="secondary" @onclick="NavigateToOverview">Cancel</button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(statusMessage))
+            {
+                <div class="status">@statusMessage</div>
+            }
+        }
 }
 
 @code {
