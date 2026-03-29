@@ -1,0 +1,105 @@
+﻿@page "/manage-order"
+@inject HttpClient http
+@inject NavigationManager navigation
+
+<h3>Manage collection order</h3>
+
+@if (summaries == null)
+{
+    <p>Loading...</p>
+}
+else if (!summaries.Any())
+{
+    <p>No collections found.</p>
+}
+else
+{
+    <div class="manage-list">
+        @for (int i = 0; i < summaries.Count; i++)
+        {
+            var item = summaries[i];
+            var index = i;
+            <div class="manage-item">
+                <div class="thumb">
+                    @if (!string.IsNullOrEmpty(item.CoverImageUri))
+                    {
+                        <img src="@item.CoverImageUri" alt="@item.ContainerName" />
+                    }
+                </div>
+                <div class="meta">
+                    <div class="name">@item.ContainerName</div>
+                    <div class="desc">@item.Description</div>
+                </div>
+                <div class="controls">
+                    <button type="button" @onclick="() => MoveUp(index)" disabled="@(index == 0)">▲</button>
+                    <button type="button" @onclick="() => MoveDown(index)" disabled="@(index == summaries.Count - 1)">▼</button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="actions">
+        <button class="save" @onclick="Save">Save order</button>
+        <button class="cancel" @onclick="NavigateToOverview">Cancel</button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(statusMessage))
+    {
+        <div class="status">@statusMessage</div>
+    }
+}
+
+@code {
+    private List<Data.ImageCollectionSummary> summaries;
+    private string statusMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        summaries = await http.GetFromJsonAsync<List<Data.ImageCollectionSummary>>("api/ImageCollectionSummaries");
+    }
+
+    private void MoveUp(int index)
+    {
+        if (index <= 0) return;
+        var item = summaries[index];
+        summaries.RemoveAt(index);
+        summaries.Insert(index - 1, item);
+        StateHasChanged();
+    }
+
+    private void MoveDown(int index)
+    {
+        if (index >= summaries.Count - 1) return;
+        var item = summaries[index];
+        summaries.RemoveAt(index);
+        summaries.Insert(index + 1, item);
+        StateHasChanged();
+    }
+
+    private async Task Save()
+    {
+        statusMessage = "Saving...";
+        StateHasChanged();
+
+        var order = summaries.Select(s => s.ContainerName).ToList();
+
+        var response = await http.PutAsJsonAsync("api/collections/order", order);
+
+        if (response.IsSuccessStatusCode)
+        {
+            statusMessage = "Order saved.";
+            // Optionally reload API cache - backend also reloads; refresh UI.
+            await Task.Delay(350);
+            navigation.NavigateTo("/overview", true);
+        }
+        else
+        {
+            statusMessage = $"Failed to save: {response.StatusCode}";
+        }
+    }
+
+    private void NavigateToOverview()
+    {
+        navigation.NavigateTo("/overview");
+    }
+}

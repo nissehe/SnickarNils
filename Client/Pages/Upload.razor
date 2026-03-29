@@ -84,7 +84,7 @@ else
         </div>
 
         <div class="actions">
-            <button class="primary" @onclick="UploadCollection" disabled="@isUploading || isInvalid">
+            <button class="primary" @onclick="UploadCollection" disabled="@(isUploading || isInvalid)">
                 @if (isUploading)
                 {
                     <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>

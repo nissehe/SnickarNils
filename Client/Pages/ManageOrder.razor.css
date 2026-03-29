@@ -1,0 +1,68 @@
+.manage-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.manage-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    background: var(--card-bg);
+    border-radius: 4px;
+}
+
+.thumb {
+    width: 80px;
+    height: 60px;
+    margin-right: 0.75rem;
+    flex: 0 0 80px;
+}
+
+.thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 2px;
+}
+
+.meta {
+    flex: 1;
+    overflow: hidden;
+}
+
+.meta .name {
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.meta .desc {
+    font-size: 0.9rem;
+    color: var(--muted-text);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-left: 0.5rem;
+}
+
+.controls button {
+    width: 34px;
+    height: 28px;
+}
+
+.actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.status {
+    margin-top: 0.5rem;
+    color: var(--text-color);
+}
