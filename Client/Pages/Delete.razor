@@ -1,0 +1,226 @@
+@page "/delete"
+@inject HttpClient http
+@inject NavigationManager navigation
+
+<h3 class="title">Delete image collection</h3>
+
+@if (!isUnlocked)
+{
+    <div class="unlock-card">
+        <div class="field">
+            <label for="pw">Enter upload password</label>
+            <input id="pw" type="password" @bind="uploadPassword" @bind:event="oninput" disabled="@isValidating" />
+        </div>
+        <div class="actions">
+            <button class="primary" @onclick="ValidatePasswordAsync" disabled="@(isValidating || string.IsNullOrEmpty(uploadPassword))">
+                @if (isValidating)
+                {
+                    <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                }
+                Unlock
+            </button>
+            <button class="secondary" @onclick="Cancel" disabled="@isValidating">Cancel</button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(status))
+        {
+            <div class="status">@status</div>
+        }
+    </div>
+}
+else
+{
+    <div class="upload-card">
+        <div class="form-grid">
+            <div class="field">
+                @if (summaries == null)
+                {
+                    <div>Loading collections...</div>
+                }
+                else if (summaries.Count == 0)
+                {
+                    <div>No collections found.</div>
+                }
+                else
+                {
+                    <label for="collection">Select collection to delete</label>
+                    <select id="collection" value="@selectedContainer" @onchange="OnContainerChanged" disabled="@isDeleting">
+                        <option value="">-- select --</option>
+                        @foreach (var s in summaries)
+                        {
+                            <option value="@s.ContainerName">@s.ContainerName (@s.ImageCount)</option>
+                        }
+                    </select>
+                }
+            </div>
+
+            @if (!string.IsNullOrEmpty(selectedContainer))
+            {
+                <div class="field fullwidth">
+                    <label>Selected collection</label>
+                    <div class="info">
+                        <strong>@selectedContainer</strong>
+                        @if (!string.IsNullOrEmpty(selectedCover))
+                        {
+                            <div class="thumb"><img src="@selectedCover" alt="cover" /></div>
+                        }
+                        <p class="desc">@selectedDescription</p>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Type the container name to confirm delete</label>
+                    <input placeholder="Type container name to confirm" @bind="confirmText" @bind:event="oninput" disabled="@isDeleting" />
+                </div>
+            }
+        </div>
+
+        <div class="actions">
+            <button class="danger" @onclick="DeleteSelected" disabled="@(isDeleting || confirmText != selectedContainer)">
+                @if (isDeleting)
+                {
+                    <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                }
+                Delete
+            </button>
+            <button class="secondary" @onclick="Refresh" disabled="@isDeleting">Refresh list</button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(status))
+        {
+            <div class="status">@status</div>
+        }
+    </div>
+}
+
+@code {
+    private List<Data.ImageCollectionSummary> summaries;
+    private string selectedContainer;
+    private string selectedCover;
+    private string selectedDescription;
+    private string confirmText;
+
+    // auth/unlock
+    private string uploadPassword;
+    private bool isValidating;
+    private bool isUnlocked;
+
+    // deletion state
+    private bool isDeleting;
+    private string status;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSummaries();
+    }
+
+    private void Cancel()
+    {
+        navigation.NavigateTo("/");
+    }
+
+    private async Task LoadSummaries()
+    {
+        try
+        {
+            summaries = await http.GetFromJsonAsync<List<Data.ImageCollectionSummary>>("api/ImageCollectionSummaries");
+        }
+        catch
+        {
+            summaries = new List<Data.ImageCollectionSummary>();
+        }
+    }
+
+    private async Task Refresh()
+    {
+        status = null;
+        await LoadSummaries();
+        StateHasChanged();
+    }
+
+    private async Task ValidatePasswordAsync()
+    {
+        isValidating = true;
+        status = null;
+
+        try
+        {
+            var resp = await http.PostAsJsonAsync("api/validate-upload-password", new { Password = uploadPassword });
+
+            if (resp.IsSuccessStatusCode)
+            {
+                isUnlocked = true;
+                status = null;
+            }
+            else
+            {
+                status = "Invalid password.";
+            }
+        }
+        catch (Exception ex)
+        {
+            status = $"Error validating password: {ex.Message}";
+        }
+        finally
+        {
+            isValidating = false;
+        }
+    }
+
+    private async Task DeleteSelected()
+    {
+        if (string.IsNullOrEmpty(selectedContainer)) return;
+
+        isDeleting = true;
+        status = "Deleting container...";
+
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Delete, $"api/delete-collection/{selectedContainer}");
+            request.Headers.Add("X-Upload-Password", uploadPassword);
+
+            var resp = await http.SendAsync(request);
+
+            if (resp.IsSuccessStatusCode)
+            {
+                status = "Deleted. Reloading list...";
+                await Task.Delay(300);
+                await LoadSummaries();
+                selectedContainer = null;
+                confirmText = null;
+                selectedCover = null;
+                selectedDescription = null;
+            }
+            else
+            {
+                var text = await resp.Content.ReadAsStringAsync();
+                status = $"Delete failed: {resp.StatusCode} - {text}";
+            }
+        }
+        catch (Exception ex)
+        {
+            status = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
+
+    private void OnContainerChanged(ChangeEventArgs e)
+    {
+        selectedContainer = e?.Value?.ToString();
+        confirmText = string.Empty;
+        if (!string.IsNullOrEmpty(selectedContainer) && summaries != null)
+        {
+            var s = summaries.FirstOrDefault(x => x.ContainerName == selectedContainer);
+            selectedCover = s?.CoverImageUri;
+            selectedDescription = s?.Description;
+        }
+        else
+        {
+            selectedCover = null;
+            selectedDescription = null;
+        }
+    }
+}

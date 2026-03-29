@@ -1,0 +1,77 @@
+.upload-card, .unlock-card {
+    max-width: 900px;
+    margin: 1.5rem auto;
+    padding: 1.25rem;
+    background: var(--background-color);
+    color: var(--text-color);
+    border-radius: 0.5rem;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+.title {
+    margin-left: 0.5rem;
+    font-weight: 600;
+}
+
+.list label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+}
+
+select, input, textarea {
+    padding: 0.5rem;
+    border-radius: 0.35rem;
+    border: 1px solid rgba(0,0,0,0.08);
+    background: transparent;
+    color: var(--text-color);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.info {
+    margin-top: 0.75rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.thumb img {
+    width: 120px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 0.3rem;
+}
+
+.desc {
+    color: rgba(0,0,0,0.65);
+}
+
+.confirm {
+    margin-top: 0.75rem;
+}
+
+.actions {
+    margin-top: 0.75rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+button.primary, button.danger, button.secondary {
+    padding: 0.5rem 0.8rem;
+    border-radius: 0.35rem;
+    border: 1px solid rgba(0,0,0,0.08);
+    cursor: pointer;
+}
+
+button.danger {
+    background: linear-gradient(180deg, #e84b4b, #c83b3b);
+    color: white;
+    border: none;
+}
+
+.status {
+    margin-top: 0.75rem;
+    font-size: 0.95rem;
+    color: rgba(0,0,0,0.7);
+}
