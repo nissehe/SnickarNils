@@ -1,0 +1,35 @@
+.unlock-card {
+    background: var(--card-bg, #fff);
+    padding: 1rem;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    margin-bottom: 1rem;
+}
+
+.unlock-card .field {
+    margin-bottom: 0.75rem;
+}
+
+.unlock-card label {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--text-color);
+}
+
+.unlock-card input[type="password"] {
+    width: 100%;
+    padding: 0.45rem 0.5rem;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 4px;
+}
+
+.unlock-card .actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.unlock-card .status {
+    margin-top: 0.5rem;
+    color: var(--text-color);
+}

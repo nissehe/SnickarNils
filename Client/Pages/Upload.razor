@@ -9,27 +9,7 @@
 
 @if (!isUnlocked)
 {
-    <div class="unlock-card">
-        <div class="field">
-            <label for="pw">Enter upload password</label>
-            <input id="pw" type="password" @bind="uploadPassword" @bind:event="oninput" disabled="@isValidating" />
-        </div>
-        <div class="actions">
-            <button class="primary" @onclick="ValidatePasswordAsync" disabled="@(isValidating || string.IsNullOrEmpty(uploadPassword))">
-                @if (isValidating)
-                {
-                    <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
-                }
-                Unlock
-            </button>
-            <button class="secondary" @onclick="Cancel" disabled="@isValidating">Cancel</button>
-        </div>
-
-        @if (!string.IsNullOrEmpty(status))
-        {
-            <div class="status">@status</div>
-        }
-    </div>
+    <UnlockCard OnUnlocked="HandleUnlocked" OnCancel="Cancel" />
 }
 else
 {
@@ -107,7 +87,6 @@ else
 
     // auth/unlock
     private string uploadPassword;
-    private bool isValidating;
     private bool isUnlocked;
 
     // upload form
@@ -133,40 +112,18 @@ else
         navigation.NavigateTo("/");
     }
 
+    private void HandleUnlocked(string password)
+    {
+        uploadPassword = password;
+        isUnlocked = true;
+        status = null;
+    }
+
     private static bool IsValidContainerName(string name)
     {
         if (string.IsNullOrWhiteSpace(name)) return false;
         // allow letters, numbers, hyphens and underscores (case-insensitive)
         return System.Text.RegularExpressions.Regex.IsMatch(name.Trim(), @"^[a-z0-9\-_]+$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-    }
-
-    private async Task ValidatePasswordAsync()
-    {
-        isValidating = true;
-        status = null;
-
-        try
-        {
-            var resp = await http.PostAsJsonAsync("api/validate-upload-password", new { Password = uploadPassword });
-
-            if (resp.IsSuccessStatusCode)
-            {
-                isUnlocked = true;
-                status = null;
-            }
-            else
-            {
-                status = "Invalid password.";
-            }
-        }
-        catch (Exception ex)
-        {
-            status = $"Error validating password: {ex.Message}";
-        }
-        finally
-        {
-            isValidating = false;
-        }
     }
 
     private async Task OnCoverSelectedAsync(InputFileChangeEventArgs e)

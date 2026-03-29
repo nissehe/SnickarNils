@@ -1,0 +1,74 @@
+@using System.Net.Http.Json
+@inject HttpClient http
+
+<div class="unlock-card">
+    <div class="field">
+        <label for="pw">@Label</label>
+        <input id="pw" type="password" @bind="password" @bind:event="oninput" disabled="@isValidating" />
+    </div>
+
+    <div class="actions">
+        <button class="primary" @onclick="ValidateAsync" disabled="@(isValidating || string.IsNullOrEmpty(password))">
+            @if (isValidating)
+            {
+                <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+            }
+            Unlock
+        </button>
+        <button class="secondary" @onclick="CancelAsync" disabled="@isValidating">Cancel</button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(localStatus))
+    {
+        <div class="status">@localStatus</div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string Label { get; set; } = "Enter upload password";
+
+    [Parameter]
+    public EventCallback<string> OnUnlocked { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    private string password;
+    private bool isValidating;
+    private string localStatus;
+
+    private async Task ValidateAsync()
+    {
+        isValidating = true;
+        localStatus = null;
+
+        try
+        {
+            var resp = await http.PostAsJsonAsync("api/validate-upload-password", new { Password = password });
+
+            if (resp.IsSuccessStatusCode)
+            {
+                await OnUnlocked.InvokeAsync(password);
+            }
+            else
+            {
+                localStatus = "Invalid password.";
+            }
+        }
+        catch (Exception ex)
+        {
+            localStatus = $"Error validating password: {ex.Message}";
+        }
+        finally
+        {
+            isValidating = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CancelAsync()
+    {
+        await OnCancel.InvokeAsync(null);
+    }
+}

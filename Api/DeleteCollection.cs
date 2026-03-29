@@ -1,7 +1,7 @@
 using System.Net;
+using Azure.Storage.Blobs;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
 
 namespace Api;
@@ -21,7 +21,7 @@ internal class DeleteCollection
 
     [Function("DeleteCollection")]
     public async Task<HttpResponseData> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "delete-collection/{containerName}")] HttpRequestData req,
+        [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "collections/{containerName}")] HttpRequestData req,
         string containerName)
     {
         try
