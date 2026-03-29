@@ -1,9 +1,11 @@
 using System.Net;
+using System.Text;
 using System.Text.Json;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Data;
 
 namespace Api;
 
@@ -29,6 +31,7 @@ internal class UploadCollection
         public string CoverFileName { get; set; }
         public string CoverBase64 { get; set; }
         public List<UploadImageDto> Images { get; set; } = new();
+        public string Password { get; set; }
     }
 
     [Function("UploadCollection")]
@@ -40,6 +43,43 @@ internal class UploadCollection
             var json = await req.ReadAsStringAsync();
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var upload = JsonSerializer.Deserialize<UploadCollectionRequest>(json, options);
+
+            // Allow password via header X-Upload-Password or JSON property Password
+            string providedPassword = null;
+            if (req.Headers.TryGetValues("X-Upload-Password", out var headerVals))
+            {
+                providedPassword = headerVals.FirstOrDefault();
+            }
+            if (string.IsNullOrEmpty(providedPassword) && upload != null)
+            {
+                providedPassword = upload.Password;
+            }
+
+            var configuredPassword = Environment.GetEnvironmentVariable("UPLOAD_PASSWORD");
+
+            if (string.IsNullOrEmpty(configuredPassword) || string.IsNullOrEmpty(providedPassword))
+            {
+                var bad = req.CreateResponse(HttpStatusCode.Unauthorized);
+                await bad.WriteStringAsync("Unauthorized");
+                return bad;
+            }
+
+            // Basic constant-time comparison
+            bool match = configuredPassword.Length == providedPassword.Length;
+            if (match)
+            {
+                for (int i = 0; i < configuredPassword.Length; i++)
+                {
+                    match &= configuredPassword[i] == providedPassword[i];
+                }
+            }
+
+            if (!match)
+            {
+                var bad = req.CreateResponse(HttpStatusCode.Unauthorized);
+                await bad.WriteStringAsync("Unauthorized");
+                return bad;
+            }
 
             if (upload == null || string.IsNullOrWhiteSpace(upload.ContainerName))
             {

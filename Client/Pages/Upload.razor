@@ -1,80 +1,116 @@
 @page "/upload"
 @using Microsoft.AspNetCore.Components.Forms
+@using System.Text.Json
+@using System.Text
 @inject HttpClient http
 @inject NavigationManager navigation
 
 <h3 class="title">Upload new image collection</h3>
 
-<div class="upload-card">
-    <div class="form-grid">
+@if (!isUnlocked)
+{
+    <div class="unlock-card">
         <div class="field">
-            <label for="container">Container name</label>
-            <input id="container" placeholder="e.g. my-collection" @bind="containerName" @bind:event="oninput" disabled="@isUploading" />
-            <small class="hint">Lowercase, no spaces. Will be used as the blob container name.</small>
-            @if (showContainerValidation)
-            {
-                <div class="validation">Container name is required and may contain only letters, numbers, hyphens and underscores.</div>
-            }
+            <label for="pw">Enter upload password</label>
+            <input id="pw" type="password" @bind="uploadPassword" @bind:event="oninput" disabled="@isValidating" />
+        </div>
+        <div class="actions">
+            <button class="primary" @onclick="ValidatePasswordAsync" disabled="@(isValidating || string.IsNullOrEmpty(uploadPassword))">
+                @if (isValidating)
+                {
+                    <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                }
+                Unlock
+            </button>
+            <button class="secondary" @onclick="Cancel" disabled="@isValidating">Cancel</button>
         </div>
 
-        <div class="field fullwidth">
-            <label for="description">Description (optional)</label>
-            <textarea id="description" rows="4" placeholder="Short description shown on the overview" @bind="description" disabled="@isUploading"></textarea>
-        </div>
-
-        <div class="field">
-            <label>Cover image</label>
-            <InputFile OnChange="OnCoverSelectedAsync" accept="image/*" disabled="@isUploading" />
-            @if (!string.IsNullOrEmpty(coverName))
-            {
-                <div class="file-meta">Selected: @coverName</div>
-            }
-            @if (!string.IsNullOrEmpty(coverPreview))
-            {
-                <div class="preview">
-                    <img src="@coverPreview" alt="Cover preview" />
-                </div>
-            }
-        </div>
-
-        <div class="field">
-            <label>Other images</label>
-            <InputFile OnChange="OnImagesSelectedAsync" multiple accept="image/*" disabled="@isUploading" />
-            @if (imageNames?.Any() == true)
-            {
-                <div class="file-meta">Selected: @imageNames.Count image(s)</div>
-                <div class="preview-grid">
-                    @for (int i = 0; i < otherPreviews.Count; i++)
-                    {
-                        <div class="thumb" title="@imageNames[i]">
-                            <img src="@otherPreviews[i]" alt="@imageNames[i]" />
-                        </div>
-                    }
-                </div>
-            }
-        </div>
+        @if (!string.IsNullOrEmpty(status))
+        {
+            <div class="status">@status</div>
+        }
     </div>
+}
+else
+{
+    <div class="upload-card">
+        <div class="form-grid">
+            <div class="field">
+                <label for="container">Container name</label>
+                <input id="container" placeholder="e.g. my-collection" @bind="containerName" @bind:event="oninput" disabled="@isUploading" />
+                <small class="hint">Lowercase, no spaces. Will be used as the blob container name.</small>
+                @if (showContainerValidation)
+                {
+                    <div class="validation">Container name is required and may contain only letters, numbers, hyphens and underscores.</div>
+                }
+            </div>
 
-    <div class="actions">
-        <button class="primary" @onclick="UploadCollection" disabled="@(isUploading || isInvalid)">
-            @if (isUploading)
-            {
-                <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
-                <span class="sr-only">Uploading...</span>
-            }
-            Upload
-        </button>
-        <button class="secondary" @onclick="Cancel" disabled="@isUploading">Cancel</button>
+            <div class="field fullwidth">
+                <label for="description">Description (optional)</label>
+                <textarea id="description" rows="4" placeholder="Short description shown on the overview" @bind="description" disabled="@isUploading"></textarea>
+            </div>
+
+            <div class="field">
+                <label>Cover image</label>
+                <InputFile OnChange="OnCoverSelectedAsync" accept="image/*" disabled="@isUploading" />
+                @if (!string.IsNullOrEmpty(coverName))
+                {
+                    <div class="file-meta">Selected: @coverName</div>
+                }
+                @if (!string.IsNullOrEmpty(coverPreview))
+                {
+                    <div class="preview">
+                        <img src="@coverPreview" alt="Cover preview" />
+                    </div>
+                }
+            </div>
+
+            <div class="field">
+                <label>Other images</label>
+                <InputFile OnChange="OnImagesSelectedAsync" multiple accept="image/*" disabled="@isUploading" />
+                @if (imageNames?.Any() == true)
+                {
+                    <div class="file-meta">Selected: @imageNames.Count image(s)</div>
+                    <div class="preview-grid">
+                        @for (int i = 0; i < otherPreviews.Count; i++)
+                        {
+                            <div class="thumb" title="@imageNames[i]">
+                                <img src="@otherPreviews[i]" alt="@imageNames[i]" />
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="primary" @onclick="UploadCollection" disabled="@isUploading || isInvalid">
+                @if (isUploading)
+                {
+                    <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                    <span class="sr-only">Uploading...</span>
+                }
+                Upload
+            </button>
+            <button class="secondary" @onclick="Cancel" disabled="@isUploading">Cancel</button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(status))
+        {
+            <div class="status">@status</div>
+        }
     </div>
-
-    @if (!string.IsNullOrEmpty(status))
-    {
-        <div class="status">@status</div>
-    }
-</div>
+}
 
 @code {
     private const long MaxFileSize = 20 * 1024 * 1024; // 20 MB per file
+
+    // auth/unlock
+    private string uploadPassword;
+    private bool isValidating;
+    private bool isUnlocked;
+
+    // upload form
     private string containerName;
     private string description;
     private IBrowserFile coverFile;
@@ -88,7 +124,6 @@
     private string coverPreview;
     private List<string> otherPreviews = new();
 
-    // show validation when user attempted to submit and value is missing or invalid
     private bool attemptedSubmit;
     private bool isInvalid => string.IsNullOrWhiteSpace(containerName) || !IsValidContainerName(containerName);
     private bool showContainerValidation => attemptedSubmit && isInvalid;
@@ -103,6 +138,35 @@
         if (string.IsNullOrWhiteSpace(name)) return false;
         // allow letters, numbers, hyphens and underscores (case-insensitive)
         return System.Text.RegularExpressions.Regex.IsMatch(name.Trim(), @"^[a-z0-9\-_]+$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    }
+
+    private async Task ValidatePasswordAsync()
+    {
+        isValidating = true;
+        status = null;
+
+        try
+        {
+            var resp = await http.PostAsJsonAsync("api/validate-upload-password", new { Password = uploadPassword });
+
+            if (resp.IsSuccessStatusCode)
+            {
+                isUnlocked = true;
+                status = null;
+            }
+            else
+            {
+                status = "Invalid password.";
+            }
+        }
+        catch (Exception ex)
+        {
+            status = $"Error validating password: {ex.Message}";
+        }
+        finally
+        {
+            isValidating = false;
+        }
     }
 
     private async Task OnCoverSelectedAsync(InputFileChangeEventArgs e)
@@ -196,8 +260,14 @@
                 Images = imageDtos
             };
 
-            status = "Uploading to server...";
-            var resp = await http.PostAsJsonAsync("api/upload-collection", payload);
+            var json = JsonSerializer.Serialize(payload);
+            using var content = new StringContent(json, Encoding.UTF8, "application/json");
+            using var request = new HttpRequestMessage(HttpMethod.Post, "api/upload-collection");
+            request.Content = content;
+            // include password header so server enforces it on upload
+            request.Headers.Add("X-Upload-Password", uploadPassword);
+
+            var resp = await http.SendAsync(request);
 
             if (resp.IsSuccessStatusCode)
             {
