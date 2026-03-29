@@ -29,33 +29,8 @@ internal class UpdateCollectionOrder
     {
         try
         {
-            // Require password in header X-Upload-Password
-            string providedPassword = null;
-            if (req.Headers.TryGetValues("X-Upload-Password", out var headerVals))
-            {
-                providedPassword = headerVals.FirstOrDefault();
-            }
-
-            var configuredPassword = Environment.GetEnvironmentVariable("UPLOAD_PASSWORD");
-
-            if (string.IsNullOrEmpty(configuredPassword) || string.IsNullOrEmpty(providedPassword))
-            {
-                var badResp = req.CreateResponse(HttpStatusCode.Unauthorized);
-                await badResp.WriteStringAsync("Unauthorized");
-                return badResp;
-            }
-
-            // Constant-time comparison
-            bool match = configuredPassword.Length == providedPassword.Length;
-            if (match)
-            {
-                for (int i = 0; i < configuredPassword.Length; i++)
-                {
-                    match &= configuredPassword[i] == providedPassword[i];
-                }
-            }
-
-            if (!match)
+            // Validate header password
+            if (!PasswordValidator.ValidateRequest(req))
             {
                 var badResp = req.CreateResponse(HttpStatusCode.Unauthorized);
                 await badResp.WriteStringAsync("Unauthorized");

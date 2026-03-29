@@ -44,37 +44,8 @@ internal class UploadCollection
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var upload = JsonSerializer.Deserialize<UploadCollectionRequest>(json, options);
 
-            // Allow password via header X-Upload-Password or JSON property Password
-            string providedPassword = null;
-            if (req.Headers.TryGetValues("X-Upload-Password", out var headerVals))
-            {
-                providedPassword = headerVals.FirstOrDefault();
-            }
-            if (string.IsNullOrEmpty(providedPassword) && upload != null)
-            {
-                providedPassword = upload.Password;
-            }
-
-            var configuredPassword = Environment.GetEnvironmentVariable("UPLOAD_PASSWORD");
-
-            if (string.IsNullOrEmpty(configuredPassword) || string.IsNullOrEmpty(providedPassword))
-            {
-                var bad = req.CreateResponse(HttpStatusCode.Unauthorized);
-                await bad.WriteStringAsync("Unauthorized");
-                return bad;
-            }
-
-            // Basic constant-time comparison
-            bool match = configuredPassword.Length == providedPassword.Length;
-            if (match)
-            {
-                for (int i = 0; i < configuredPassword.Length; i++)
-                {
-                    match &= configuredPassword[i] == providedPassword[i];
-                }
-            }
-
-            if (!match)
+            // Validate password (header or body)
+            if (!PasswordValidator.ValidateRequest(req, upload?.Password))
             {
                 var bad = req.CreateResponse(HttpStatusCode.Unauthorized);
                 await bad.WriteStringAsync("Unauthorized");
