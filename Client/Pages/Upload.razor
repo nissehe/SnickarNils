@@ -3,52 +3,75 @@
 @inject HttpClient http
 @inject NavigationManager navigation
 
-<h3>Upload new image collection</h3>
+<h3 class="title">Upload new image collection</h3>
 
-<div class="form-row">
-    <label>Container name (lowercase, no spaces):</label>
-    <input @bind="containerName" />
-</div>
-
-<div class="form-row">
-    <label>Description (optional):</label>
-    <textarea @bind="description" rows="4"></textarea>
-</div>
-
-<div class="form-row">
-    <label>Cover image (single)</label>
-    <InputFile OnChange="OnCoverSelected" />
-    @if (!string.IsNullOrEmpty(coverName))
-    {
-        <div>Selected cover: @coverName</div>
-    }
-</div>
-
-<div class="form-row">
-    <label>Other images (multiple)</label>
-    <InputFile OnChange="OnImagesSelected" multiple />
-    @if (imageNames?.Any() == true)
-    {
-        <div>Selected images:
-            <ul>
-                @foreach (var n in imageNames)
-                {
-                    <li>@n</li>
-                }
-            </ul>
+<div class="upload-card">
+    <div class="form-grid">
+        <div class="field">
+            <label for="container">Container name</label>
+            <input id="container" placeholder="e.g. my-collection" @bind="containerName" @bind:event="oninput" disabled="@isUploading" />
+            <small class="hint">Lowercase, no spaces. Will be used as the blob container name.</small>
+            @if (showContainerValidation)
+            {
+                <div class="validation">Container name is required and may contain only letters, numbers, hyphens and underscores.</div>
+            }
         </div>
+
+        <div class="field fullwidth">
+            <label for="description">Description (optional)</label>
+            <textarea id="description" rows="4" placeholder="Short description shown on the overview" @bind="description" disabled="@isUploading"></textarea>
+        </div>
+
+        <div class="field">
+            <label>Cover image</label>
+            <InputFile OnChange="OnCoverSelectedAsync" accept="image/*" disabled="@isUploading" />
+            @if (!string.IsNullOrEmpty(coverName))
+            {
+                <div class="file-meta">Selected: @coverName</div>
+            }
+            @if (!string.IsNullOrEmpty(coverPreview))
+            {
+                <div class="preview">
+                    <img src="@coverPreview" alt="Cover preview" />
+                </div>
+            }
+        </div>
+
+        <div class="field">
+            <label>Other images</label>
+            <InputFile OnChange="OnImagesSelectedAsync" multiple accept="image/*" disabled="@isUploading" />
+            @if (imageNames?.Any() == true)
+            {
+                <div class="file-meta">Selected: @imageNames.Count image(s)</div>
+                <div class="preview-grid">
+                    @for (int i = 0; i < otherPreviews.Count; i++)
+                    {
+                        <div class="thumb" title="@imageNames[i]">
+                            <img src="@otherPreviews[i]" alt="@imageNames[i]" />
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="actions">
+        <button class="primary" @onclick="UploadCollection" disabled="@(isUploading || isInvalid)">
+            @if (isUploading)
+            {
+                <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                <span class="sr-only">Uploading...</span>
+            }
+            Upload
+        </button>
+        <button class="secondary" @onclick="Cancel" disabled="@isUploading">Cancel</button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(status))
+    {
+        <div class="status">@status</div>
     }
 </div>
-
-<div style="margin-top:1rem;">
-    <button @onclick="UploadCollection" disabled="@isUploading">Upload</button>
-    <button @onclick="Cancel" disabled="@isUploading">Cancel</button>
-</div>
-
-@if (!string.IsNullOrEmpty(status))
-{
-    <div style="margin-top:1rem;">@status</div>
-}
 
 @code {
     private const long MaxFileSize = 20 * 1024 * 1024; // 20 MB per file
@@ -61,21 +84,73 @@
     private bool isUploading;
     private string status;
 
+    // UI-only previews
+    private string coverPreview;
+    private List<string> otherPreviews = new();
+
+    // show validation when user attempted to submit and value is missing or invalid
+    private bool attemptedSubmit;
+    private bool isInvalid => string.IsNullOrWhiteSpace(containerName) || !IsValidContainerName(containerName);
+    private bool showContainerValidation => attemptedSubmit && isInvalid;
+
     private void Cancel()
     {
         navigation.NavigateTo("/");
     }
 
-    private void OnCoverSelected(InputFileChangeEventArgs e)
+    private static bool IsValidContainerName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return false;
+        // allow letters, numbers, hyphens and underscores (case-insensitive)
+        return System.Text.RegularExpressions.Regex.IsMatch(name.Trim(), @"^[a-z0-9\-_]+$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    }
+
+    private async Task OnCoverSelectedAsync(InputFileChangeEventArgs e)
     {
         coverFile = e.File;
         coverName = coverFile?.Name;
+        coverPreview = await GetImagePreviewDataUrlAsync(coverFile);
+        StateHasChanged();
     }
 
-    private void OnImagesSelected(InputFileChangeEventArgs e)
+    private async Task OnImagesSelectedAsync(InputFileChangeEventArgs e)
     {
         otherFiles = e.GetMultipleFiles().ToList();
         imageNames = otherFiles.Select(f => f.Name).ToList();
+
+        otherPreviews.Clear();
+        foreach (var f in otherFiles)
+        {
+            otherPreviews.Add(await GetImagePreviewDataUrlAsync(f));
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task<string> GetImagePreviewDataUrlAsync(IBrowserFile file)
+    {
+        if (file == null) return null;
+
+        try
+        {
+            // Request a smaller image for preview to save memory and bandwidth in the browser
+            var format = "image/png";
+            var maxWidth = 400;
+            var maxHeight = 300;
+            var imageFile = await file.RequestImageFileAsync(format, maxWidth, maxHeight);
+            using var ms = new MemoryStream();
+            await imageFile.OpenReadStream(MaxFileSize).CopyToAsync(ms);
+            var b64 = Convert.ToBase64String(ms.ToArray());
+            return $"data:{format};base64,{b64}";
+        }
+        catch
+        {
+            // fallback: read raw file
+            using var ms = new MemoryStream();
+            await file.OpenReadStream(MaxFileSize).CopyToAsync(ms);
+            var b64 = Convert.ToBase64String(ms.ToArray());
+            return $"data:{file.ContentType};base64,{b64}";
+        }
     }
 
     private async Task<string> ReadFileAsBase64(IBrowserFile file)
@@ -90,9 +165,11 @@
 
     private async Task UploadCollection()
     {
-        if (string.IsNullOrWhiteSpace(containerName))
+        attemptedSubmit = true;
+
+        if (isInvalid)
         {
-            status = "Container name is required.";
+            status = "Please provide a valid container name.";
             return;
         }
 
@@ -112,7 +189,7 @@
 
             var payload = new
             {
-                ContainerName = containerName.Trim(),
+                ContainerName = containerName.Trim().ToLowerInvariant(),
                 Description = description ?? string.Empty,
                 CoverFileName = coverFile?.Name,
                 CoverBase64 = coverBase64,
@@ -125,7 +202,6 @@
             if (resp.IsSuccessStatusCode)
             {
                 status = "Upload successful. Reloading overview...";
-                // call reload to refresh backend cache, then navigate to overview
                 await http.PostAsync("api/reload", null);
                 navigation.NavigateTo("/overview");
             }
