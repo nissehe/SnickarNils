@@ -1,4 +1,5 @@
 ﻿@inject NavigationManager navigation
+@inject IJSRuntime js
 
 @if (ImageCollectionSummary != null)
 {
@@ -26,8 +27,10 @@ else
     [Parameter]
     public ImageCollectionSummary ImageCollectionSummary { get; set; }
 
-    private void ViewCollection()
+    private async Task ViewCollection()
     {
+        // Save overview scroll position before navigating away
+        await js.InvokeVoidAsync("blazorScroll.save", "overviewScroll");
         navigation.NavigateTo($"/collection/{ImageCollectionSummary.ContainerName}");
     }
 }
