@@ -4,18 +4,18 @@
 <div class="unlock-card">
     <div class="field">
         <label for="pw">@Label</label>
-        <input id="pw" type="password" @bind="password" @bind:event="oninput" disabled="@isValidating" />
+        <input id="pw" type="password" @bind="password" @bind:event="oninput" disabled="@isValidating" @onkeydown="HandleKeyDown" />
     </div>
 
     <div class="actions">
-        <button class="primary" @onclick="ValidateAsync" disabled="@(isValidating || string.IsNullOrEmpty(password))">
+        <button type="button" class="primary" @onclick="ValidateAsync" disabled="@(isValidating || string.IsNullOrEmpty(password))">
             @if (isValidating)
             {
                 <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
             }
             Unlock
         </button>
-        <button class="secondary" @onclick="CancelAsync" disabled="@isValidating">Cancel</button>
+        <button type="button" class="secondary" @onclick="CancelAsync" disabled="@isValidating">Cancel</button>
     </div>
 
     @if (!string.IsNullOrEmpty(localStatus))
@@ -70,5 +70,13 @@
     private async Task CancelAsync()
     {
         await OnCancel.InvokeAsync(null);
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e?.Key == "Enter" && !isValidating && !string.IsNullOrEmpty(password))
+        {
+            await ValidateAsync();
+        }
     }
 }
