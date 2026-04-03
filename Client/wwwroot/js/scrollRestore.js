@@ -49,6 +49,11 @@ window.blazorScroll = {
                 setTimeout(function () {
                     doScroll(y);
                 }, 150);
+
+                // Fallback after a longer delay in case images or fonts change layout
+                setTimeout(function () {
+                    doScroll(y);
+                }, 1000);
             }
         } catch (e) {
         }
