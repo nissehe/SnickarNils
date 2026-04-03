@@ -1,4 +1,11 @@
-/* keep per-item layout but adopt upload page card styling context */
+.upload-button {
+    font-weight: bolder;
+    font-size: xxx-large;
+    width: 60px;
+    border-radius: 5px;
+    border-color: transparent;
+}
+
 .upload-card {
     background: var(--card-bg, #fff);
     padding: 1rem;

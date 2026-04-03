@@ -1,9 +1,9 @@
-﻿@page "/manage-order"
+﻿@page "/hantering"
 @inject HttpClient http
 @inject NavigationManager navigation
 @inject IJSRuntime js
 
-<h3 class="title">Manage collection order</h3>
+<h3 class="title">Administration</h3>
 
 @if (!isUnlocked)
 {
@@ -11,51 +11,66 @@
 }
 else
 {
-        @if (summaries == null)
-        {
-            <p>Loading...</p>
-        }
-        else if (!summaries.Any())
-        {
-            <p>No collections found.</p>
-        }
-        else
-        {
-            <div class="manage-list">
-                @for (int i = 0; i < summaries.Count; i++)
-                {
-                    var item = summaries[i];
-                    var index = i;
-                    <div class="manage-item">
-                        <div class="thumb">
-                            @if (!string.IsNullOrEmpty(item.CoverImageUri))
-                            {
-                                <img src="@item.CoverImageUri" alt="@item.ContainerName" />
-                            }
-                        </div>
-                        <div class="meta">
-                            <div class="name">@item.ContainerName</div>
-                            <div class="desc">@item.Description</div>
-                        </div>
-                        <div class="controls">
-                            <button type="button" class="secondary small" @onclick="() => MoveUp(index)" disabled="@(index == 0)">▲</button>
-                            <button type="button" class="secondary small" @onclick="() => MoveDown(index)" disabled="@(index == summaries.Count - 1)">▼</button>
-                            <button type="button" class="danger small" @onclick="() => DeleteCollection(index)">🗑</button>
-                        </div>
-                    </div>
-                }
+    <div class="admin-header" style="margin-bottom:1rem">
+        <button type="button" class="upload-button primary" title="Add new collection" @onclick="ShowUploadModal">
+            <div style="margin-top:-10px">
+                +
             </div>
+        </button>
+    </div>
 
-            <div class="actions" style="margin-top:1rem">
-                <button class="primary" @onclick="Save" disabled="@(isSaving)">Save order</button>
-                <button class="secondary" @onclick="NavigateToOverview">Cancel</button>
-            </div>
-
-            @if (!string.IsNullOrEmpty(statusMessage))
+    @if (summaries == null)
+    {
+        <p>Loading...</p>
+    }
+    else if (!summaries.Any())
+    {
+        <p>No collections found.</p>
+    }
+    else
+    {
+        <div class="manage-list">
+            @for (int i = 0; i < summaries.Count; i++)
             {
-                <div class="status">@statusMessage</div>
+                var item = summaries[i];
+                var index = i;
+                <div class="manage-item">
+                    <div class="thumb">
+                        @if (!string.IsNullOrEmpty(item.CoverImageUri))
+                        {
+                            <img src="@item.CoverImageUri" alt="@item.ContainerName" />
+                        }
+                    </div>
+                    <div class="meta">
+                        <div class="name">@item.ContainerName</div>
+                        <div class="desc">@item.Description</div>
+                    </div>
+                    <div class="controls">
+                        <button type="button" class="secondary small" @onclick="() => MoveUp(index)" disabled="@(index == 0)">▲</button>
+                        <button type="button" class="secondary small" @onclick="() => MoveDown(index)" disabled="@(index == summaries.Count - 1)">▼</button>
+                        <button type="button" class="danger small" style="color:black" @onclick="() => DeleteCollection(index)">✖</button>
+                    </div>
+                </div>
             }
+        </div>
+
+        <div class="actions" style="margin-top:1rem">
+            <button class="primary" @onclick="Save" disabled="@(isSaving)">Save order</button>
+            <button class="secondary" @onclick="NavigateToOverview">Cancel</button>
+        </div>
+
+        @if (!string.IsNullOrEmpty(statusMessage))
+        {
+            <div class="status">@statusMessage</div>
         }
+    }
+}
+
+@if (showUploadModal)
+{
+    <div class="modal-backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:2000">
+        <Upload UploadPassword="@uploadPassword" OnCancel="CloseUploadModal" OnUploaded="HandleUploaded" />
+    </div>
 }
 
 @code {
@@ -66,6 +81,9 @@ else
     // password/unlock
     private string uploadPassword;
     private bool isUnlocked;
+
+    // upload modal
+    private bool showUploadModal;
 
     protected override async Task OnInitializedAsync()
     {
@@ -185,5 +203,27 @@ else
     private void NavigateToOverview()
     {
         navigation.NavigateTo("/overview");
+    }
+
+    private void ShowUploadModal()
+    {
+        if (!isUnlocked) return;
+        showUploadModal = true;
+    }
+
+    private void CloseUploadModal()
+    {
+        showUploadModal = false;
+    }
+
+    private async void HandleUploaded()
+    {
+        // Close modal and reload summaries
+        showUploadModal = false;
+        statusMessage = "Reloading...";
+        StateHasChanged();
+        summaries = await http.GetFromJsonAsync<List<Data.ImageCollectionSummary>>("api/ImageCollectionSummaries");
+        statusMessage = "Upload complete.";
+        StateHasChanged();
     }
 }
