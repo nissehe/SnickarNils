@@ -54,7 +54,7 @@
     </div>
 
     <div class="actions">
-        <button class="primary" @onclick="UploadCollection" disabled="@(isUploading || isInvalid)">
+        <button type="button" class="primary" @onclick="UploadCollection" disabled="@(isUploading || isInvalid)">
             @if (isUploading)
             {
                 <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
@@ -62,7 +62,7 @@
             }
             Upload
         </button>
-        <button class="secondary" @onclick="Cancel" disabled="@isUploading">Cancel</button>
+        <button type="button" class="secondary" @onclick="Cancel" disabled="@isUploading">Cancel</button>
     </div>
 
     @if (!string.IsNullOrEmpty(status))
@@ -79,10 +79,10 @@
     public string UploadPassword { get; set; }
 
     [Parameter]
-    public Action OnCancel { get; set; }
+    public EventCallback OnCancel { get; set; }
 
     [Parameter]
-    public Action OnUploaded { get; set; }
+    public EventCallback OnUploaded { get; set; }
 
     // upload form
     private string containerName;
@@ -102,9 +102,12 @@
     private bool isInvalid => string.IsNullOrWhiteSpace(containerName) || !IsValidContainerName(containerName);
     private bool showContainerValidation => attemptedSubmit && isInvalid;
 
-    private void Cancel()
+    private async Task Cancel()
     {
-        OnCancel?.Invoke();
+        if (OnCancel.HasDelegate)
+        {
+            await OnCancel.InvokeAsync(null);
+        }
     }
 
     private static bool IsValidContainerName(string name)
@@ -217,7 +220,10 @@
             if (resp.IsSuccessStatusCode)
             {
                 status = "Upload successful. Reloading overview...";
-                OnUploaded?.Invoke();
+                if (OnUploaded.HasDelegate)
+                {
+                    await OnUploaded.InvokeAsync(null);
+                }
             }
             else
             {
