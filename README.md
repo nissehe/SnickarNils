@@ -16,6 +16,8 @@ The summaries on the overview page are displayed in container name order, within
 A storage container named 'metadata' may contain a file named 'image_collection_order.txt'. This file can contain a newline separated list of image container names that will control the order of the image collections in the frontend. 
 Containers not included in the list will be displayed in alphabetical order after the specified containers.
 
+The above can also be manged from the admin page
+
 ## Cache
 The API keeps a cache of the contents of the Azure storage containers. To wipe the cache after making changes to the containers, go to the page /reload
 
