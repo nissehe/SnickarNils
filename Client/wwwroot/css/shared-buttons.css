@@ -66,3 +66,37 @@ button.secondary {
 .controls button.danger:hover {
     background-color: #ff4500;
 }
+
+/* ===== Styling for native file input "button" used by Blazor InputFile =====
+   Modern browsers support ::file-selector-button; WebKit needs ::-webkit-file-upload-button.
+   This makes the file button visually match your primary button style while keeping the
+   rest of the input text transparent.
+*/
+input[type="file"] {
+    color: var(--text-color);
+    background: transparent;
+    border: none;
+    padding: 0; /* keep the native input layout clean */
+}
+
+/* File selector button (modern browsers) */
+input[type="file"]::file-selector-button {
+    padding: 0.45rem 0.75rem;
+    margin-right: 0.5rem;
+    border-radius: 0.4rem;
+    border: 1px solid rgba(0,0,0,0.08);
+    background: linear-gradient(180deg, #2f6fe4, #1e54c8);
+    color: white;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font: revert;
+}
+
+/* Disabled state for file button */
+input[type="file"]::file-selector-button:disabled,
+input[type="file"]::-webkit-file-upload-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
