@@ -101,42 +101,6 @@ textarea {
     object-fit: cover;
 }
 
-/* Actions */
-.actions {
-    margin-top: 1rem;
-    display: flex;
-    gap: 0.5rem;
-}
-
-button {
-    padding: 0.5rem 0.85rem;
-    border-radius: 0.4rem;
-    border: 1px solid rgba(0,0,0,0.08);
-    cursor: pointer;
-    background: transparent;
-    color: var(--text-color);
-}
-
-button.primary {
-    background: linear-gradient(180deg, #2f6fe4, #1e54c8);
-    color: white;
-    border: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-button.primary:disabled,
-button.secondary:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-button.secondary {
-    background: transparent;
-    border: 1px solid rgba(0,0,0,0.08);
-}
-
 /* status */
 .status {
     margin-top: 1rem;

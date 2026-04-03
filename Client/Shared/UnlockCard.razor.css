@@ -23,12 +23,6 @@
     border-radius: 4px;
 }
 
-.unlock-card .actions {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-}
-
 .unlock-card .status {
     margin-top: 0.5rem;
     color: var(--text-color);
