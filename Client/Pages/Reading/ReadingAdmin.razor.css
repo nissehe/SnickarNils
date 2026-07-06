@@ -1,0 +1,91 @@
+/* Reading challenge color scheme - deliberately distinct from the portfolio theme */
+
+.reading-page {
+    background-image: linear-gradient(rgba(255,255,255,0.18), rgba(255,255,255,0.18)), url('/images/reading-background.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    box-sizing: border-box;
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    margin-top: -1rem;
+    padding: 2rem 1.25rem;
+    min-height: calc(100vh - 3.5rem);
+}
+
+.reading-page-inner {
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+.title {
+    color: #264653;
+    text-shadow: 0 1px 4px rgba(255,255,255,0.9), 0 1px 2px rgba(255,255,255,0.9);
+}
+
+.reading-admin-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 20rem;
+    margin-bottom: 1rem;
+}
+
+.reading-admin-form label {
+    color: #264653;
+    text-shadow: 0 1px 4px rgba(255,255,255,0.9), 0 1px 2px rgba(255,255,255,0.9);
+}
+
+.reading-admin-form input {
+    padding: 0.45rem 0.5rem;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 4px;
+}
+
+.reading-admin-form input:focus {
+    outline: none;
+    border-color: #2A9D8F;
+    box-shadow: 0 0 0 2px rgba(42, 157, 143, 0.2);
+}
+
+.reading-admin-form button.primary {
+    background: linear-gradient(180deg, #2A9D8F, #1F7A6F);
+}
+
+.profile-list {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    column-gap: 1.5rem;
+    row-gap: 0.5rem;
+    align-items: center;
+    list-style: none;
+    padding: 0;
+}
+
+.profile-list li {
+    display: contents;
+}
+
+.profile-list li > * {
+    padding: 0.5rem 0;
+    color: #264653;
+}
+
+.profile-list .col-name {
+    font-weight: bold;
+}
+
+.profile-list button.secondary {
+    border: 1px solid #E76F51;
+    color: #E76F51;
+    background: transparent;
+}
+
+.status {
+    margin-top: 0.75rem;
+    color: #264653;
+}

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Azure;
+﻿using Api.Reading;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Diagnostics;
@@ -14,6 +15,7 @@ public class Program
             .ConfigureServices(services =>
             {
                 services.AddSingleton<ImageCollectionService>();
+                services.AddSingleton<ReadingService>();
 
                 string blobStorageConnectionString = Debugger.IsAttached
                     ? Environment.GetEnvironmentVariable("AzureWebJobsStorage")

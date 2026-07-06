@@ -348,3 +348,9 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+
+# Azure Functions local settings (contains secrets, machine-specific)
+local.settings.json
+
+# Azurite local storage emulator data
+.azurite/

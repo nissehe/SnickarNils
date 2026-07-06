@@ -1,0 +1,119 @@
+@page "/reading-admin"
+@using Data.Reading
+@using Client.Pages.Reading
+@inject HttpClient http
+@inject NavigationManager navigation
+
+<div class="reading-page">
+    <div class="reading-page-inner">
+        <h3 class="title">Hantera läsprofiler</h3>
+
+        @if (!isUnlocked)
+        {
+            <UnlockCard Label="Ange lösenord" OnUnlocked="HandleUnlock" OnCancel="NavigateToOverview" />
+        }
+        else
+        {
+            <div class="reading-admin-form">
+                <label for="name">Namn</label>
+                <input id="name" @bind="profileName" placeholder="t.ex. Klara" />
+
+                <label for="goal">Mål (minuter)</label>
+                <input id="goal" type="number" min="1" @bind="goalMinutes" />
+
+                <button type="button" class="primary" @onclick="SaveProfile" disabled="@(isSaving || string.IsNullOrWhiteSpace(profileName) || goalMinutes <= 0)">Spara</button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(statusMessage))
+            {
+                <div class="status">@statusMessage</div>
+            }
+
+            @if (profiles != null && profiles.Any())
+            {
+                <h4>Befintliga profiler</h4>
+                <ul class="profile-list">
+                    @foreach (var profile in profiles)
+                    {
+                        <li>
+                            <span class="col-name">@profile.Name</span>
+                            <span class="col-goal">Mål: @ReadingTimeFormatter.Format(profile.GoalMinutes)</span>
+                            <button type="button" class="secondary small col-edit" @onclick="() => EditProfile(profile)">Redigera</button>
+                        </li>
+                    }
+                </ul>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private bool isUnlocked;
+    private string password;
+    private string profileName;
+    private int goalMinutes = 500;
+    private bool isSaving;
+    private string statusMessage;
+    private List<ReadingProfileSummary> profiles;
+
+    private async Task HandleUnlock(string pw)
+    {
+        password = pw;
+        isUnlocked = true;
+        await LoadProfiles();
+    }
+
+    private async Task LoadProfiles()
+    {
+        profiles = await http.GetFromJsonAsync<List<ReadingProfileSummary>>("api/reading/profiles");
+    }
+
+    private void EditProfile(ReadingProfileSummary profile)
+    {
+        profileName = profile.Name;
+        goalMinutes = profile.GoalMinutes;
+        statusMessage = null;
+    }
+
+    private async Task SaveProfile()
+    {
+        isSaving = true;
+        statusMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"api/reading/profiles/{Uri.EscapeDataString(profileName)}")
+            {
+                Content = JsonContent.Create(new { GoalMinutes = goalMinutes })
+            };
+            request.Headers.Add("X-Upload-Password", password);
+
+            var response = await http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                statusMessage = $"Sparade profil '{profileName}'.";
+                await LoadProfiles();
+            }
+            else
+            {
+                statusMessage = $"Kunde inte spara: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Fel: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private void NavigateToOverview()
+    {
+        navigation.NavigateTo("/overview");
+    }
+}

@@ -1,0 +1,375 @@
+@page "/reading"
+@using Data.Reading
+@using System.Globalization
+@using System.Text
+@using Client.Pages.Reading
+@inject HttpClient http
+@inject IJSRuntime js
+
+<div class="reading-page">
+    <div class="reading-page-inner">
+        <h3 class="title">Läsutmaningen</h3>
+
+        @if (profiles == null)
+        {
+            <p>Laddar...</p>
+        }
+        else if (!profiles.Any())
+        {
+            <p>Inga läsprofiler är uppsatta ännu.</p>
+        }
+        else
+        {
+            <div class="progress-list">
+                @foreach (var profile in profiles)
+                {
+                    var isExpanded = expanded.TryGetValue(profile.Name, out var state);
+                    var isGoalReached = profile.GoalMinutes > 0 && profile.RemainingMinutes <= 0;
+
+                    <div class="progress-row @(isExpanded ? "selected expanded" : "") @(isGoalReached ? "goal-reached" : "")" data-profile="@profile.Name">
+                        <div class="progress-clickable" @onclick="() => ToggleProfile(profile)">
+                            <div class="progress-header">
+                                <span class="name">@profile.Name</span>
+                                @if (!isExpanded)
+                                {
+                                    <span class="numbers">@ReadingTimeFormatter.Format(profile.RemainingMinutes) kvar</span>
+                                }
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-fill" style="width:@(GetPercent(profile).ToString("0.##", CultureInfo.InvariantCulture))%"></div>
+                            </div>
+                        </div>
+
+                        @if (isExpanded)
+                        {
+                            <div class="progress-expanded">
+                                <div class="stats-stacked">
+                                    <p><span class="stat-label">Kvar:</span> @ReadingTimeFormatter.Format(profile.RemainingMinutes)</p>
+                                    <p><span class="stat-label">Läst:</span> @ReadingTimeFormatter.Format(profile.TotalMinutesRead)</p>
+                                    <p><span class="stat-label">Mål:</span> @ReadingTimeFormatter.Format(profile.GoalMinutes)</p>
+                                </div>
+
+                                @if (state.Detail == null)
+                                {
+                                    <p>Laddar graf...</p>
+                                }
+                                else
+                                {
+                                    <div class="chart-wrapper">
+                                        <svg viewBox="0 0 @ChartWidth @ChartHeight" preserveAspectRatio="none" class="reading-chart">
+                                            <line x1="0" y1="0" x2="@ChartWidth" y2="0" class="goal-line" />
+                                            <path d="@BuildAreaPath(state.Detail)" class="chart-area" />
+                                            <polyline points="@BuildPolylinePoints(state.Detail)" class="chart-line" />
+                                        </svg>
+                                        <div class="chart-dates">
+                                            <span>@FormatDate(globalStartDate)</span>
+                                            <span>@FormatDate(DateTime.UtcNow)</span>
+                                        </div>
+                                    </div>
+                                }
+
+                                <div class="log-form">
+                                    <label for="minutes-@profile.Name">Minuter lästa nu <span class="hint">(negativt för att korrigera)</span></label>
+                                    <input id="minutes-@profile.Name" type="number" @bind="state.MinutesToLog" />
+                                    <button type="button" class="primary" @onclick="() => LogMinutes(profile)" disabled="@(state.IsSaving || state.MinutesToLog == 0)">Logga</button>
+                                    @if (!string.IsNullOrEmpty(state.StatusMessage))
+                                    {
+                                        <span class="status">@state.StatusMessage</span>
+                                    }
+                                </div>
+
+                                <div class="books-section">
+                                    <h4>Böcker jag läst</h4>
+
+                                    @if (state.Detail != null && state.Detail.Books != null && state.Detail.Books.Any())
+                                    {
+                                        <ul class="book-list">
+                                            @foreach (var book in state.Detail.Books)
+                                            {
+                                                <li>@book.Title</li>
+                                            }
+                                        </ul>
+                                    }
+                                    else
+                                    {
+                                        <p class="book-list-empty">Inga böcker tillagda ännu.</p>
+                                    }
+
+                                    <div class="book-form">
+                                        <input type="text" placeholder="Boktitel" @bind="state.NewBookTitle" @bind:event="oninput" @onkeydown="@(e => HandleBookKeyDown(e, profile))" />
+                                        <button type="button" class="secondary" @onclick="() => AddBook(profile)" disabled="@(state.IsAddingBook || string.IsNullOrWhiteSpace(state.NewBookTitle))">Lägg till</button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private const double ChartWidth = 300;
+    private const double ChartHeight = 100;
+
+    private List<ReadingProfileSummary> profiles;
+    private Dictionary<string, ExpandedState> expanded = new();
+    private DateTime? globalStartDate;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProfiles();
+    }
+
+    private async Task LoadProfiles()
+    {
+        profiles = await http.GetFromJsonAsync<List<ReadingProfileSummary>>("api/reading/profiles");
+
+        SortProfiles();
+    }
+
+    private void SortProfiles()
+    {
+        profiles = profiles.OrderByDescending(p => p.TotalMinutesRead).ToList();
+    }
+
+    private double GetPercent(ReadingProfileSummary profile)
+    {
+        if (profile.GoalMinutes <= 0)
+        {
+            return 0;
+        }
+
+        return Math.Min(100, (double)profile.TotalMinutesRead / profile.GoalMinutes * 100);
+    }
+
+    private async Task ToggleProfile(ReadingProfileSummary profile)
+    {
+        if (expanded.ContainsKey(profile.Name))
+        {
+            expanded.Remove(profile.Name);
+            return;
+        }
+
+        expanded[profile.Name] = new ExpandedState();
+        StateHasChanged();
+
+        if (globalStartDate == null)
+        {
+            var startDateResponse = await http.GetFromJsonAsync<StartDateResponse>("api/reading/start-date");
+            globalStartDate = startDateResponse?.StartDate;
+        }
+
+        await LoadExpandedDetail(profile.Name);
+    }
+
+    private async Task LoadExpandedDetail(string name)
+    {
+        if (!expanded.TryGetValue(name, out var state))
+        {
+            return;
+        }
+
+        state.Detail = await http.GetFromJsonAsync<ReadingProfile>($"api/reading/profiles/{Uri.EscapeDataString(name)}");
+        StateHasChanged();
+    }
+
+    private List<(double X, double Y)> ComputeChartPoints(ReadingProfile profile)
+    {
+        var points = new List<(double X, double Y)>();
+
+        if (globalStartDate == null || profile == null)
+        {
+            return points;
+        }
+
+        var startDate = globalStartDate.Value.Date;
+        var today = DateTime.UtcNow.Date;
+        var totalTicks = Math.Max(1, (today - startDate).Ticks);
+
+        var series = new List<(DateTime Date, int Cumulative)> { (startDate, 0) };
+
+        int running = 0;
+        foreach (var entry in profile.Entries.OrderBy(e => e.Date))
+        {
+            running += entry.Minutes;
+            series.Add((entry.Date.Date, running));
+        }
+
+        if (series.Last().Date < today)
+        {
+            series.Add((today, running));
+        }
+
+        double maxY = Math.Max(profile.GoalMinutes, running);
+        if (maxY <= 0)
+        {
+            maxY = 1;
+        }
+
+        foreach (var (date, cumulative) in series)
+        {
+            var xFrac = Math.Clamp((date - startDate).Ticks / (double)totalTicks, 0, 1);
+            var yFrac = Math.Clamp(cumulative / maxY, 0, 1);
+
+            points.Add((xFrac * ChartWidth, ChartHeight - (yFrac * ChartHeight)));
+        }
+
+        return points;
+    }
+
+    private string BuildPolylinePoints(ReadingProfile profile)
+    {
+        var points = ComputeChartPoints(profile);
+
+        var sb = new StringBuilder();
+        foreach (var (x, y) in points)
+        {
+            sb.Append(x.ToString("0.##", CultureInfo.InvariantCulture));
+            sb.Append(',');
+            sb.Append(y.ToString("0.##", CultureInfo.InvariantCulture));
+            sb.Append(' ');
+        }
+
+        return sb.ToString().Trim();
+    }
+
+    private string BuildAreaPath(ReadingProfile profile)
+    {
+        var points = ComputeChartPoints(profile);
+
+        if (!points.Any())
+        {
+            return string.Empty;
+        }
+
+        var sb = new StringBuilder();
+        sb.Append($"M0,{ChartHeight.ToString(CultureInfo.InvariantCulture)} ");
+
+        foreach (var (x, y) in points)
+        {
+            sb.Append($"L{x.ToString("0.##", CultureInfo.InvariantCulture)},{y.ToString("0.##", CultureInfo.InvariantCulture)} ");
+        }
+
+        sb.Append($"L{ChartWidth.ToString(CultureInfo.InvariantCulture)},{ChartHeight.ToString(CultureInfo.InvariantCulture)} Z");
+
+        return sb.ToString();
+    }
+
+    private string FormatDate(DateTime? date)
+    {
+        return date.HasValue ? date.Value.ToString("d MMM", CultureInfo.InvariantCulture) : string.Empty;
+    }
+
+    private async Task LogMinutes(ReadingProfileSummary profile)
+    {
+        if (!expanded.TryGetValue(profile.Name, out var state) || state.MinutesToLog == 0)
+        {
+            return;
+        }
+
+        state.IsSaving = true;
+        state.StatusMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var response = await http.PostAsJsonAsync($"api/reading/profiles/{Uri.EscapeDataString(profile.Name)}/log", new { Minutes = state.MinutesToLog });
+
+            if (response.IsSuccessStatusCode)
+            {
+                var updatedSummary = await response.Content.ReadFromJsonAsync<ReadingProfileSummary>();
+
+                var index = profiles.FindIndex(p => p.Name == updatedSummary.Name);
+                if (index >= 0)
+                {
+                    profiles[index] = updatedSummary;
+                }
+
+                SortProfiles();
+
+                await LoadExpandedDetail(updatedSummary.Name);
+
+                state.StatusMessage = "Sparat!";
+                StateHasChanged();
+
+                if (state.MinutesToLog > 0)
+                {
+                    await js.InvokeVoidAsync("readingConfetti.burst", updatedSummary.Name);
+                }
+            }
+            else
+            {
+                state.StatusMessage = $"Kunde inte spara: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            state.StatusMessage = $"Fel: {ex.Message}";
+        }
+        finally
+        {
+            state.IsSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task AddBook(ReadingProfileSummary profile)
+    {
+        if (!expanded.TryGetValue(profile.Name, out var state) || string.IsNullOrWhiteSpace(state.NewBookTitle))
+        {
+            return;
+        }
+
+        state.IsAddingBook = true;
+        StateHasChanged();
+
+        try
+        {
+            var response = await http.PostAsJsonAsync($"api/reading/profiles/{Uri.EscapeDataString(profile.Name)}/books", new { Title = state.NewBookTitle });
+
+            if (response.IsSuccessStatusCode)
+            {
+                state.NewBookTitle = string.Empty;
+                await LoadExpandedDetail(profile.Name);
+            }
+            else
+            {
+                state.StatusMessage = $"Kunde inte lägga till bok: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            state.StatusMessage = $"Fel: {ex.Message}";
+        }
+        finally
+        {
+            state.IsAddingBook = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleBookKeyDown(KeyboardEventArgs e, ReadingProfileSummary profile)
+    {
+        if (e.Key == "Enter")
+        {
+            await AddBook(profile);
+        }
+    }
+
+    private class ExpandedState
+    {
+        public ReadingProfile Detail { get; set; }
+        public int MinutesToLog { get; set; } = 10;
+        public bool IsSaving { get; set; }
+        public string StatusMessage { get; set; }
+        public string NewBookTitle { get; set; } = string.Empty;
+        public bool IsAddingBook { get; set; }
+    }
+
+    private class StartDateResponse
+    {
+        public DateTime? StartDate { get; set; }
+    }
+}
