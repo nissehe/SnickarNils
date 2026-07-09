@@ -24,6 +24,7 @@ internal class ReadingService
     private class ProfileStorage
     {
         public int GoalMinutes { get; set; }
+        public int DailyTargetMinutes { get; set; } = 20;
         public List<ReadingLogEntry> Entries { get; set; } = new();
         public List<ReadingBook> Books { get; set; } = new();
     }
@@ -143,7 +144,7 @@ internal class ReadingService
         return earliest;
     }
 
-    public async Task<ReadingProfileSummary> UpsertProfile(string name, int goalMinutes)
+    public async Task<ReadingProfileSummary> UpsertProfile(string name, int goalMinutes, int dailyTargetMinutes)
     {
         var containerClient = _blobServiceClient.GetBlobContainerClient(ContainerName);
 
@@ -154,6 +155,7 @@ internal class ReadingService
         var storage = await DownloadProfile(containerClient, blobName) ?? new ProfileStorage();
 
         storage.GoalMinutes = goalMinutes;
+        storage.DailyTargetMinutes = dailyTargetMinutes;
 
         await UploadProfile(containerClient, blobName, storage);
 
@@ -171,7 +173,8 @@ internal class ReadingService
             Name = name,
             GoalMinutes = storage.GoalMinutes,
             TotalMinutesRead = totalMinutes,
-            RemainingMinutes = Math.Max(0, storage.GoalMinutes - totalMinutes)
+            RemainingMinutes = Math.Max(0, storage.GoalMinutes - totalMinutes),
+            DailyTargetMinutes = storage.DailyTargetMinutes
         };
     }
 

@@ -32,7 +32,10 @@
                                 <span class="name">@profile.Name</span>
                                 @if (!isExpanded)
                                 {
-                                    <span class="numbers">@ReadingTimeFormatter.Format(profile.RemainingMinutes) kvar</span>
+                                    <span class="numbers">
+                                        @ReadingTimeFormatter.Format(profile.RemainingMinutes) kvar
+                                        <span class="pace @GetPaceClass(profile)">@FormatPace(profile)</span>
+                                    </span>
                                 }
                             </div>
                             <div class="progress-bar">
@@ -43,9 +46,20 @@
                         @if (isExpanded)
                         {
                             <div class="progress-expanded">
+                                <div class="log-form">
+                                    <label for="minutes-@profile.Name">Minuter lästa nu <span class="hint">(negativt för att korrigera)</span></label>
+                                    <input id="minutes-@profile.Name" type="number" @bind="state.MinutesToLog" />
+                                    <button type="button" class="primary" @onclick="() => LogMinutes(profile)" disabled="@(state.IsSaving || state.MinutesToLog == 0)">Logga</button>
+                                    @if (!string.IsNullOrEmpty(state.StatusMessage))
+                                    {
+                                        <span class="status">@state.StatusMessage</span>
+                                    }
+                                </div>
+
                                 <div class="stats-stacked">
-                                    <p><span class="stat-label">Kvar:</span> @ReadingTimeFormatter.Format(profile.RemainingMinutes)</p>
+                                    <p><span class="stat-label">Status:</span> <span class="pace @GetPaceClass(profile)">@FormatPace(profile)</span></p>
                                     <p><span class="stat-label">Läst:</span> @ReadingTimeFormatter.Format(profile.TotalMinutesRead)</p>
+                                    <p><span class="stat-label">Kvar:</span> @ReadingTimeFormatter.Format(profile.RemainingMinutes)</p>
                                     <p><span class="stat-label">Mål:</span> @ReadingTimeFormatter.Format(profile.GoalMinutes)</p>
                                 </div>
 
@@ -67,16 +81,6 @@
                                         </div>
                                     </div>
                                 }
-
-                                <div class="log-form">
-                                    <label for="minutes-@profile.Name">Minuter lästa nu <span class="hint">(negativt för att korrigera)</span></label>
-                                    <input id="minutes-@profile.Name" type="number" @bind="state.MinutesToLog" />
-                                    <button type="button" class="primary" @onclick="() => LogMinutes(profile)" disabled="@(state.IsSaving || state.MinutesToLog == 0)">Logga</button>
-                                    @if (!string.IsNullOrEmpty(state.StatusMessage))
-                                    {
-                                        <span class="status">@state.StatusMessage</span>
-                                    }
-                                </div>
 
                                 <div class="books-section">
                                     <h4>Böcker jag läst</h4>
@@ -119,7 +123,14 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadStartDate();
         await LoadProfiles();
+    }
+
+    private async Task LoadStartDate()
+    {
+        var startDateResponse = await http.GetFromJsonAsync<StartDateResponse>("api/reading/start-date");
+        globalStartDate = startDateResponse?.StartDate;
     }
 
     private async Task LoadProfiles()
@@ -127,6 +138,40 @@
         profiles = await http.GetFromJsonAsync<List<ReadingProfileSummary>>("api/reading/profiles");
 
         SortProfiles();
+    }
+
+    private int GetPaceDifference(ReadingProfileSummary profile)
+    {
+        if (globalStartDate == null)
+        {
+            return 0;
+        }
+
+        var daysElapsed = Math.Max(0, (DateTime.UtcNow.Date - globalStartDate.Value.Date).Days);
+        var expectedMinutes = daysElapsed * profile.DailyTargetMinutes;
+
+        return profile.TotalMinutesRead - expectedMinutes;
+    }
+
+    private string GetPaceClass(ReadingProfileSummary profile)
+    {
+        var diff = GetPaceDifference(profile);
+        return diff > 0 ? "pace-ahead" : diff < 0 ? "pace-behind" : "pace-even";
+    }
+
+    private string FormatPace(ReadingProfileSummary profile)
+    {
+        var diff = GetPaceDifference(profile);
+
+        if (diff == 0)
+        {
+            return "±0 min";
+        }
+
+        var sign = diff > 0 ? "+" : "-";
+        var absMinutes = Math.Abs(diff);
+
+        return absMinutes > 60 ? $"{sign}{ReadingTimeFormatter.Format(absMinutes)}" : $"{sign}{absMinutes} min";
     }
 
     private void SortProfiles()

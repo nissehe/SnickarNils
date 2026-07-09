@@ -9,6 +9,7 @@ internal class ReadingProfileUpsertPost
     private class UpsertRequest
     {
         public int GoalMinutes { get; set; }
+        public int DailyTargetMinutes { get; set; }
     }
 
     private readonly ReadingService _readingService;
@@ -31,14 +32,14 @@ internal class ReadingProfileUpsertPost
 
         var payload = await req.ReadFromJsonAsync<UpsertRequest>();
 
-        if (payload == null || payload.GoalMinutes <= 0)
+        if (payload == null || payload.GoalMinutes <= 0 || payload.DailyTargetMinutes <= 0)
         {
             var bad = req.CreateResponse(HttpStatusCode.BadRequest);
-            await bad.WriteStringAsync("GoalMinutes must be greater than zero.");
+            await bad.WriteStringAsync("GoalMinutes and DailyTargetMinutes must be greater than zero.");
             return bad;
         }
 
-        var summary = await _readingService.UpsertProfile(name, payload.GoalMinutes);
+        var summary = await _readingService.UpsertProfile(name, payload.GoalMinutes, payload.DailyTargetMinutes);
 
         var response = req.CreateResponse(HttpStatusCode.OK);
         await response.WriteAsJsonAsync(summary);

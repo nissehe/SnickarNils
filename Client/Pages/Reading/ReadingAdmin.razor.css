@@ -58,7 +58,7 @@
 
 .profile-list {
     display: grid;
-    grid-template-columns: 1fr auto auto;
+    grid-template-columns: 1fr auto auto auto;
     column-gap: 1.5rem;
     row-gap: 0.5rem;
     align-items: center;

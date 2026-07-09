@@ -134,6 +134,24 @@
     white-space: nowrap;
 }
 
+.pace {
+    font-weight: bold;
+    margin-left: 0.3rem;
+}
+
+.pace-ahead {
+    color: #2A9D8F;
+}
+
+.pace-behind {
+    color: #E76F51;
+}
+
+.pace-even {
+    color: #264653;
+    opacity: 0.7;
+}
+
 .progress-bar {
     background: rgba(38, 70, 83, 0.12);
     border-radius: 999px;
@@ -153,6 +171,7 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 0.75rem;
+    margin-bottom: 1rem;
 }
 
 .log-form label {
